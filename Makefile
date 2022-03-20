@@ -29,6 +29,7 @@ vendor:
 vet:
 	@go vet ./breaker/...; true
 	@go vet ./shedding/...; true
+	@go vet ./limit/...; true
 
 # 静态检测 go install github.com/mgechev/revive@latest
 revive:
@@ -38,6 +39,7 @@ revive:
 fmt:
 	@gofumpt -l -w ./breaker/; true
 	@gofumpt -l -w ./shedding/; true
+	@gofumpt -l -w ./limit/; true
 
 clean:
 	go clean -i .

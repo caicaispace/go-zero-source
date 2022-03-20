@@ -16,14 +16,13 @@ func Test_Shedding(t *testing.T) {
 		fmt.Println(i, stat.CpuUsage())
 		promise, err := shedder.Allow()
 		if err != nil {
-			fmt.Println(">>>>>>>>>>>>>")
+			fmt.Println(err)
 			return
 		}
 		promise.Fail()
 		// promise.Pass()
 		time.Sleep(10 * time.Millisecond)
 	}
-	time.Sleep(1 * time.Second)
 }
 
 func cpuFull() {
