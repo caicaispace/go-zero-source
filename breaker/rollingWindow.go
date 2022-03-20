@@ -1,9 +1,10 @@
 package breaker
 
 import (
-	"gozerosource/breaker/core/timex"
 	"sync"
 	"time"
+
+	"gozerosource/breaker/core/timex"
 )
 
 type (
