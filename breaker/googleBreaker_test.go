@@ -7,7 +7,6 @@ import (
 )
 
 func TestGoogleBreaker(t *testing.T) {
-
 	// 简单场景直接判断对象是否被熔断，执行请求后必须需手动上报执行结果至熔断器。
 	gb := newGoogleBreaker()
 	for i := 0; i < 100; i++ {
