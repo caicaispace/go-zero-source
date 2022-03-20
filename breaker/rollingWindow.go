@@ -1,6 +1,7 @@
 package breaker
 
 import (
+	"gozerosource/breaker/core/timex"
 	"sync"
 	"time"
 )
@@ -32,7 +33,7 @@ func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOpt
 		size:     size,
 		win:      newWindow(size),
 		interval: interval,
-		lastTime: Now(),
+		lastTime: timex.Now(),
 	}
 	for _, opt := range opts {
 		opt(w)
@@ -68,7 +69,7 @@ func (rw *RollingWindow) Reduce(fn func(b *Bucket)) {
 }
 
 func (rw *RollingWindow) span() int {
-	offset := int(Since(rw.lastTime) / rw.interval)
+	offset := int(timex.Since(rw.lastTime) / rw.interval)
 	if 0 <= offset && offset < rw.size {
 		return offset
 	}
@@ -89,7 +90,7 @@ func (rw *RollingWindow) updateOffset() {
 	}
 
 	rw.offset = (offset + span) % rw.size
-	now := Now()
+	now := timex.Now()
 	// align to interval time boundary
 	rw.lastTime = now - (now-rw.lastTime)%rw.interval
 }
