@@ -36,12 +36,12 @@ func defaultAcceptable(err error) bool {
 }
 
 type breaker struct {
-	gb *googleBreaker
+	GB *googleBreaker
 }
 
-func newBreaker() *breaker {
+func NewBreaker() *breaker {
 	return &breaker{
-		gb: newGoogleBreaker(),
+		GB: NewGoogleBreaker(),
 	}
 }
 
@@ -50,21 +50,21 @@ func (b *breaker) Name() string {
 }
 
 func (b *breaker) Allow() (Promise, error) {
-	return b.gb.allow()
+	return b.GB.Allow()
 }
 
 func (b *breaker) Do(req func() error) error {
-	return b.gb.doReq(req, nil, defaultAcceptable)
+	return b.GB.DoReq(req, nil, defaultAcceptable)
 }
 
 func (b *breaker) DoWithAcceptable(req func() error, acceptable Acceptable) error {
-	return b.gb.doReq(req, nil, acceptable)
+	return b.GB.DoReq(req, nil, acceptable)
 }
 
 func (b *breaker) DoWithFallback(req func() error, fallback func(err error) error) error {
-	return b.gb.doReq(req, fallback, defaultAcceptable)
+	return b.GB.DoReq(req, fallback, defaultAcceptable)
 }
 
 func (b *breaker) DoWithFallbackAcceptable(req func() error, fallback func(err error) error, acceptable Acceptable) error {
-	return b.gb.doReq(req, fallback, acceptable)
+	return b.GB.DoReq(req, fallback, acceptable)
 }

@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"gozerosource/breaker/core/collection"
 )
 
 const (
@@ -52,13 +54,13 @@ var ErrServiceUnavailable = errors.New("circuit breaker is open")
 // see Client-Side Throttling section in https://landing.google.com/sre/sre-book/chapters/handling-overload/
 type googleBreaker struct {
 	k     float64
-	stat  *RollingWindow
+	stat  *collection.RollingWindow
 	proba *Proba
 }
 
-func newGoogleBreaker() *googleBreaker {
+func NewGoogleBreaker() *googleBreaker {
 	bucketDuration := time.Duration(int64(windowSec) / int64(buckets))
-	st := NewRollingWindow(buckets, bucketDuration)
+	st := collection.NewRollingWindow(buckets, bucketDuration)
 	return &googleBreaker{
 		stat:  st,
 		k:     k,
@@ -67,7 +69,7 @@ func newGoogleBreaker() *googleBreaker {
 }
 
 func (b *googleBreaker) accept() error {
-	accepts, total := b.history()
+	accepts, total := b.History()
 	weightedAccepts := b.k * float64(accepts)
 	// https://landing.google.com/sre/sre-book/chapters/handling-overload/#eq2101
 	dropRatio := math.Max(0, (float64(total-protection)-weightedAccepts)/float64(total+1))
@@ -82,7 +84,7 @@ func (b *googleBreaker) accept() error {
 	return nil
 }
 
-func (b *googleBreaker) allow() (internalPromise, error) {
+func (b *googleBreaker) Allow() (internalPromise, error) {
 	if err := b.accept(); err != nil {
 		return nil, err
 	}
@@ -92,7 +94,7 @@ func (b *googleBreaker) allow() (internalPromise, error) {
 	}, nil
 }
 
-func (b *googleBreaker) doReq(req func() error, fallback func(err error) error, acceptable Acceptable) error {
+func (b *googleBreaker) DoReq(req func() error, fallback func(err error) error, acceptable Acceptable) error {
 	if err := b.accept(); err != nil {
 		if fallback != nil {
 			return fallback(err)
@@ -126,8 +128,8 @@ func (b *googleBreaker) markFailure() {
 	b.stat.Add(0)
 }
 
-func (b *googleBreaker) history() (accepts, total int64) {
-	b.stat.Reduce(func(b *Bucket) {
+func (b *googleBreaker) History() (accepts, total int64) {
+	b.stat.Reduce(func(b *collection.Bucket) {
 		accepts += int64(b.Sum)
 		total += b.Count
 	})

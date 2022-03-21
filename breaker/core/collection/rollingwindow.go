@@ -1,4 +1,4 @@
-package breaker
+package collection
 
 import (
 	"sync"

@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"gozerosource/breaker/core/breaker"
 )
 
-func TestGoogleBreaker(t *testing.T) {
-	// 简单场景直接判断对象是否被熔断，执行请求后必须需手动上报执行结果至熔断器。
-	gb := newGoogleBreaker()
+// 简单场景直接判断对象是否被熔断，执行请求后必须需手动上报执行结果至熔断器。
+func Test_GoogleBreaker(t *testing.T) {
+	gb := breaker.NewGoogleBreaker()
 	for i := 0; i < 100; i++ {
-		allow, err := gb.allow()
+		allow, err := gb.Allow()
 		if err != nil {
 			fmt.Println("err", err)
 			break
@@ -23,12 +25,14 @@ func TestGoogleBreaker(t *testing.T) {
 			allow.Accept()
 		}
 	}
-	fmt.Println(gb.history())
+	fmt.Println(gb.History())
+}
 
-	// 复杂场景下支持自定义快速失败，自定义判定请求是否成功的熔断方法，自动上报执行结果至熔断器。
-	gb2 := newGoogleBreaker()
+// 复杂场景下支持自定义快速失败，自定义判定请求是否成功的熔断方法，自动上报执行结果至熔断器。
+func Test_GoogleBreaker2(t *testing.T) {
+	gb := breaker.NewGoogleBreaker()
 	for i := 0; i < 100; i++ {
-		err := gb2.doReq(
+		err := gb.DoReq(
 			func() error {
 				if i < 10 {
 					time.Sleep(20 * time.Millisecond)
@@ -50,5 +54,5 @@ func TestGoogleBreaker(t *testing.T) {
 			break
 		}
 	}
-	fmt.Println(gb2.history())
+	fmt.Println(gb.History())
 }

@@ -2,19 +2,27 @@ package limit_test
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"gozerosource/limit/core/syncx"
+	"gozerosource/limit/core/limit"
+
+	"github.com/zeromicro/go-zero/core/stores/redis"
 )
 
-func Test_limit(t *testing.T) {
+func Test_TokenLimiter(t *testing.T) {
 	const (
+		burst   = 100
+		rate    = 100
 		seconds = 5
-		threads = 100
 	)
+	store := redis.New("127.0.0.1:6379")
+	fmt.Println(store.Ping())
+	// New tokenLimiter
+	limiter := limit.NewTokenLimiter(rate, burst, store, "token-limiter")
 	timer := time.NewTimer(time.Second * seconds)
 	quit := make(chan struct{})
 	defer timer.Stop()
@@ -23,11 +31,9 @@ func Test_limit(t *testing.T) {
 		close(quit)
 	}()
 
-	latch := syncx.NewLimit(20)
-
 	var allowed, denied int32
 	var wait sync.WaitGroup
-	for i := 0; i < threads; i++ {
+	for i := 0; i < runtime.NumCPU(); i++ {
 		wait.Add(1)
 		go func() {
 			for {
@@ -36,13 +42,8 @@ func Test_limit(t *testing.T) {
 					wait.Done()
 					return
 				default:
-					if latch.TryBorrow() {
+					if limiter.Allow() {
 						atomic.AddInt32(&allowed, 1)
-						defer func() {
-							if err := latch.Return(); err != nil {
-								fmt.Println(err)
-							}
-						}()
 					} else {
 						atomic.AddInt32(&denied, 1)
 					}
@@ -53,20 +54,4 @@ func Test_limit(t *testing.T) {
 
 	wait.Wait()
 	fmt.Printf("allowed: %d, denied: %d, qps: %d\n", allowed, denied, (allowed+denied)/seconds)
-}
-
-func Benchmark_limit(b *testing.B) {
-	// 测试一个对象或者函数在多线程的场景下面是否安全
-	b.RunParallel(func(pb *testing.PB) {
-		latch := syncx.NewLimit(10)
-		for pb.Next() {
-			if latch.TryBorrow() {
-				defer func() {
-					if err := latch.Return(); err != nil {
-						fmt.Println(err)
-					}
-				}()
-			}
-		}
-	})
 }

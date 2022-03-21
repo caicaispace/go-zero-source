@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"gozerosource/breaker/core/breaker"
 )
 
-func TestBreaker(t *testing.T) {
-	b := newBreaker()
+func Test_Breaker(t *testing.T) {
+	b := breaker.NewBreaker()
 	for i := 0; i < 100; i++ {
 		allow, err := b.Allow()
 		if err != nil {
@@ -22,11 +24,13 @@ func TestBreaker(t *testing.T) {
 			allow.Accept()
 		}
 	}
-	fmt.Println(b.gb.history())
+	fmt.Println(b.GB.History())
+}
 
-	b2 := newBreaker()
+func Test_Beaker2(t *testing.T) {
+	b := breaker.NewBreaker()
 	for i := 0; i < 100; i++ {
-		err := b2.DoWithAcceptable(
+		err := b.DoWithAcceptable(
 			func() error {
 				if i < 10 {
 					time.Sleep(20 * time.Millisecond)
@@ -44,5 +48,5 @@ func TestBreaker(t *testing.T) {
 			break
 		}
 	}
-	fmt.Println(b2.gb.history())
+	fmt.Println(b.GB.History())
 }
