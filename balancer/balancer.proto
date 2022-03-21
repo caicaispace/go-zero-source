@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./pb";
+
+message Request {
+    string name = 1;
+}
+
+message Response {
+    string data = 1;
+}
+
+service Balancer {
+    rpc Hello(Request) returns (Response);
+}
