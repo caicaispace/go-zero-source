@@ -17,6 +17,7 @@ func (b *discovBuilder) Build(target resolver.Target, cc resolver.ClientConn, _ 
 	hosts := strings.FieldsFunc(target.Authority, func(r rune) bool {
 		return r == EndpointSepChar
 	})
+	// 获取服务列表
 	sub, err := discov.NewSubscriber(hosts, target.Endpoint)
 	if err != nil {
 		return nil, err
@@ -29,13 +30,16 @@ func (b *discovBuilder) Build(target resolver.Target, cc resolver.ClientConn, _ 
 				Addr: val,
 			})
 		}
+		// 调用UpdateState方法更新
 		if err := cc.UpdateState(resolver.State{
 			Addresses: addrs,
 		}); err != nil {
 			logx.Errorf("%s", err)
 		}
 	}
+	// 添加监听，当服务地址发生变化会触发更新
 	sub.AddListener(update)
+	// 更新服务列表
 	update()
 
 	return &nopResolver{cc: cc}, nil

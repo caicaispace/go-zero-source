@@ -65,7 +65,7 @@ func NewServer() {
 	interceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		st := time.Now()
 		resp, err = handler(ctx, req)
-		log.Printf("method: %s time: %v\n", info.FullMethod, time.Since(st))
+		log.Printf("👋 method: %s time: %v\n\n", info.FullMethod, time.Since(st))
 		return resp, err
 	}
 

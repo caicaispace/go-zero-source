@@ -32,6 +32,7 @@ var (
 )
 
 // RegisterResolver registers the direct and discov schemes to the resolver.
+// RegisterResolver 注册自定义的Resolver
 func RegisterResolver() {
 	resolver.Register(&directResolverBuilder)
 	resolver.Register(&discovResolverBuilder)

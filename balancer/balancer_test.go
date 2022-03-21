@@ -1,7 +1,6 @@
 package balancer_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -10,7 +9,7 @@ import (
 
 func TestP2C(t *testing.T) {
 	const (
-		seconds = 5
+		seconds = 10
 	)
 	timer := time.NewTimer(time.Second * seconds)
 	quit := make(chan struct{})
@@ -22,12 +21,13 @@ func TestP2C(t *testing.T) {
 	}()
 
 	go balancer.NewServer()
+	go balancer.NewClient()
 
-	select {
-	case <-quit:
-		fmt.Println("quit >>>>>>>>>>>>>>>>>")
-		return
-	default:
-		balancer.NewClient()
+	for {
+		select {
+		case <-quit:
+			return
+		default:
+		}
 	}
 }
