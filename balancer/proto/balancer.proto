@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package proto;
 
-option go_package = "./pb";
+option go_package = "./;proto";
 
 message Request {
-    string name = 1;
+    string msg = 1;
 }
 
 message Response {

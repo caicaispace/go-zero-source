@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	xrate "golang.org/x/time/rate"
 )
@@ -113,14 +114,14 @@ func (lim *TokenLimiter) reserveN(now time.Time, n int) bool {
 		return false
 	}
 	if err != nil {
-		fmt.Errorf("fail to use rate limiter: %s, use in-process limiter for rescue", err)
+		logx.Errorf("fail to use rate limiter: %s, use in-process limiter for rescue", err)
 		lim.startMonitor()
 		return lim.rescueLimiter.AllowN(now, n)
 	}
 
 	code, ok := resp.(int64)
 	if !ok {
-		fmt.Errorf("fail to eval redis script: %v, use in-process limiter for rescue", resp)
+		logx.Errorf("fail to eval redis script: %v, use in-process limiter for rescue", resp)
 		lim.startMonitor()
 		return lim.rescueLimiter.AllowN(now, n)
 	}

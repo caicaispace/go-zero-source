@@ -7,6 +7,7 @@ import (
 
 	"gozerosource/balancer/zrpc/resolver/internal/kube"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/core/threading"
 
@@ -53,7 +54,7 @@ func (b *kubeBuilder) Build(target resolver.Target, cc resolver.ClientConn,
 		if err := cc.UpdateState(resolver.State{
 			Addresses: addrs,
 		}); err != nil {
-			fmt.Errorf("%s", err)
+			logx.Errorf("%s", err)
 		}
 	})
 	inf := informers.NewSharedInformerFactoryWithOptions(cs, resyncInterval,

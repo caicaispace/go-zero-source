@@ -1,10 +1,10 @@
 package internal
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/zeromicro/go-zero/core/discov"
+	"github.com/zeromicro/go-zero/core/logx"
 
 	"google.golang.org/grpc/resolver"
 )
@@ -32,7 +32,7 @@ func (b *discovBuilder) Build(target resolver.Target, cc resolver.ClientConn, _ 
 		if err := cc.UpdateState(resolver.State{
 			Addresses: addrs,
 		}); err != nil {
-			fmt.Errorf("%s", err)
+			logx.Errorf("%s", err)
 		}
 	}
 	sub.AddListener(update)
