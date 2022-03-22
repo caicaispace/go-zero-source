@@ -28,13 +28,13 @@ const (
 	// Name is the name of p2c balancer.
 	Name = "p2c_ewma"
 
-	decayTime       = int64(time.Second * 10) // default value from finagle
-	forcePick       = int64(time.Second)
-	initSuccess     = 1000
-	throttleSuccess = initSuccess / 2
-	penalty         = int64(math.MaxInt32)
-	pickTimes       = 3
-	logInterval     = time.Minute
+	decayTime       = int64(time.Second * 10) // default value from finagle（衰退时间）
+	forcePick       = int64(time.Second)      // 强制节点选取时间间隔
+	initSuccess     = 1000                    // 初始连接健康值
+	throttleSuccess = initSuccess / 2         // 连接非健康临界值
+	penalty         = int64(math.MaxInt32)    // 负载状态最大值
+	pickTimes       = 3                       // 随机选取节点次数
+	logInterval     = time.Minute             // 输出节点状态间隔时间
 )
 
 var emptyPickResult balancer.PickResult
@@ -45,6 +45,9 @@ func init() {
 
 type p2cPickerBuilder struct{}
 
+// gRPC 在节点有更新的时候会调用 Build 方法，传入所有节点信息，
+// 我们在这里把每个节点信息用 subConn 结构保存起来。
+// 并归并到一起用 p2cPicker 结构保存起来
 func (b *p2cPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 	readySCs := info.ReadySCs
 	if len(readySCs) == 0 {
@@ -78,6 +81,7 @@ type p2cPicker struct {
 	lock  sync.Mutex
 }
 
+// 选取节点算法（grpc 自定义负载均衡算法）
 func (p *p2cPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
@@ -107,7 +111,7 @@ func (p *p2cPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 				break
 			}
 		}
-		// 比较两个节点的负载情况，选择负载低的
+
 		chosen = p.choose(node1, node2)
 	}
 
@@ -120,6 +124,8 @@ func (p *p2cPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	}, nil
 }
 
+// grpc 请求结束时调用
+// 存储本次请求耗时等信息，并计算出 EWMA值 保存起来，供下次请求时计算负载等情况的使用
 func (p *p2cPicker) buildDoneFunc(c *subConn) func(info balancer.DoneInfo) {
 	start := int64(timex.Now())
 	return func(info balancer.DoneInfo) {
@@ -133,6 +139,7 @@ func (p *p2cPicker) buildDoneFunc(c *subConn) func(info balancer.DoneInfo) {
 			td = 0
 		}
 		// 用牛顿冷却定律中的衰减函数模型计算EWMA算法中的β值
+		// https://www.ruanyifeng.com/blog/2012/03/ranking_algorithm_newton_s_law_of_cooling.html
 		w := math.Exp(float64(-td) / float64(decayTime))
 		// 保存本次请求的耗时
 		lag := int64(now) - start
@@ -144,11 +151,13 @@ func (p *p2cPicker) buildDoneFunc(c *subConn) func(info balancer.DoneInfo) {
 			w = 0
 		}
 		// 计算 EWMA 值
+		// EWMA（指数加权移动平均算法 https://blog.csdn.net/mzpmzk/article/details/80085929）
 		atomic.StoreUint64(&c.lag, uint64(float64(olag)*w+float64(lag)*(1-w)))
 		success := initSuccess
 		if info.Err != nil && !codes.Acceptable(info.Err) {
 			success = 0
 		}
+		// 健康状态
 		osucc := atomic.LoadUint64(&c.success)
 		atomic.StoreUint64(&c.success, uint64(float64(osucc)*w+float64(success)*(1-w)))
 
@@ -161,6 +170,7 @@ func (p *p2cPicker) buildDoneFunc(c *subConn) func(info balancer.DoneInfo) {
 	}
 }
 
+// 比较两个节点的负载情况，选择负载低的
 func (p *p2cPicker) choose(c1, c2 *subConn) *subConn {
 	start := int64(timex.Now())
 	if c2 == nil {
@@ -168,15 +178,19 @@ func (p *p2cPicker) choose(c1, c2 *subConn) *subConn {
 		return c1
 	}
 
+	// c2 一直是负载较大的那个
 	if c1.load() > c2.load() {
-		c1, c2 = c2, c1
+		c1, c2 = c2, c1 // 交换变量，方便判断
 	}
 
 	pick := atomic.LoadInt64(&c2.pick)
+	// 如果本次被选中的时间 - 上次被选中的时间 > forcePick && 本次与上次时间点不同
+	// 则返回负载大的那个
 	if start-pick > forcePick && atomic.CompareAndSwapInt64(&c2.pick, pick, start) {
 		return c2
 	}
 
+	// 返回负载小的那个
 	atomic.StoreInt64(&c1.pick, start)
 	return c1
 }
@@ -206,10 +220,12 @@ type subConn struct {
 	conn     balancer.SubConn
 }
 
+// 节点健康情况
 func (c *subConn) healthy() bool {
 	return atomic.LoadUint64(&c.success) > throttleSuccess
 }
 
+// 节点负载情况
 func (c *subConn) load() int64 {
 	// plus one to avoid multiply zero
 	// 通过 EWMA 计算节点的负载情况； 加 1 是为了避免为 0 的情况
