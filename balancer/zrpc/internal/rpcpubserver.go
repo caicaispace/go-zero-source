@@ -14,6 +14,7 @@ const (
 )
 
 // NewRpcPubServer returns a Server.
+// 初始化 rpc 发布服务，用于服务发现
 func NewRpcPubServer(etcd discov.EtcdConf, listenOn string, opts ...ServerOption) (Server, error) {
 	registerEtcd := func() error {
 		pubListenOn := figureOutListenOn(listenOn)
@@ -36,6 +37,7 @@ func NewRpcPubServer(etcd discov.EtcdConf, listenOn string, opts ...ServerOption
 	return server, nil
 }
 
+// 连接保持服务
 type keepAliveServer struct {
 	registerEtcd func() error
 	Server
@@ -49,6 +51,7 @@ func (ags keepAliveServer) Start(fn RegisterFn) error {
 	return ags.Server.Start(fn)
 }
 
+// 重新解析配置
 func figureOutListenOn(listenOn string) string {
 	fields := strings.Split(listenOn, ":")
 	if len(fields) == 0 {

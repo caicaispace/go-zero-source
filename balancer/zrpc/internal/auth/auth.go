@@ -22,6 +22,7 @@ type Authenticator struct {
 }
 
 // NewAuthenticator returns an Authenticator.
+// 权限验证器
 func NewAuthenticator(store *redis.Redis, key string, strict bool) (*Authenticator, error) {
 	cache, err := collection.NewCache(defaultExpiration)
 	if err != nil {
@@ -37,6 +38,7 @@ func NewAuthenticator(store *redis.Redis, key string, strict bool) (*Authenticat
 }
 
 // Authenticate authenticates the given ctx.
+// 验证权限
 func (a *Authenticator) Authenticate(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

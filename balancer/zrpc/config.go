@@ -35,6 +35,7 @@ type (
 )
 
 // NewDirectClientConf returns a RpcClientConf.
+// 原生 grpc 客户端配置项
 func NewDirectClientConf(endpoints []string, app, token string) RpcClientConf {
 	return RpcClientConf{
 		Endpoints: endpoints,
@@ -44,6 +45,7 @@ func NewDirectClientConf(endpoints []string, app, token string) RpcClientConf {
 }
 
 // NewEtcdClientConf returns a RpcClientConf.
+// etcd 服务注册发现客户端配置项
 func NewEtcdClientConf(hosts []string, key, app, token string) RpcClientConf {
 	return RpcClientConf{
 		Etcd: discov.EtcdConf{
@@ -56,11 +58,13 @@ func NewEtcdClientConf(hosts []string, key, app, token string) RpcClientConf {
 }
 
 // HasEtcd checks if there is etcd settings in config.
+// 是否有 etcd 配置项
 func (sc RpcServerConf) HasEtcd() bool {
 	return len(sc.Etcd.Hosts) > 0 && len(sc.Etcd.Key) > 0
 }
 
 // Validate validates the config.
+// 配置验证器
 func (sc RpcServerConf) Validate() error {
 	if !sc.Auth {
 		return nil
@@ -70,6 +74,7 @@ func (sc RpcServerConf) Validate() error {
 }
 
 // BuildTarget builds the rpc target from the given config.
+// 从配置项中获取 rpc 客户端标准配置项
 func (cc RpcClientConf) BuildTarget() (string, error) {
 	if len(cc.Endpoints) > 0 {
 		return resolver.BuildDirectTarget(cc.Endpoints), nil
@@ -95,6 +100,7 @@ func (cc RpcClientConf) BuildTarget() (string, error) {
 }
 
 // HasCredential checks if there is a credential in config.
+// 检查配置中是否有凭证
 func (cc RpcClientConf) HasCredential() bool {
 	return len(cc.App) > 0 && len(cc.Token) > 0
 }
