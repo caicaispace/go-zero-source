@@ -14,9 +14,9 @@ type (
 	// RollingWindow defines a rolling window to calculate the events in buckets with time interval.
 	RollingWindow struct {
 		lock          sync.RWMutex
-		size          int
-		win           *window
-		interval      time.Duration
+		size          int           // 窗口大小
+		win           *window       // 窗口
+		interval      time.Duration // 窗口间隔周期
 		offset        int
 		ignoreCurrent bool
 		lastTime      time.Duration // start time of the last bucket
@@ -47,10 +47,12 @@ func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOpt
 func (rw *RollingWindow) Add(v float64) {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
+	// 滑动的动作发生在此
 	rw.updateOffset()
 	rw.win.add(rw.offset, v)
 }
 
+// 遍历所有 bucket
 // Reduce runs fn on all buckets, ignore current bucket if ignoreCurrent was set.
 func (rw *RollingWindow) Reduce(fn func(b *Bucket)) {
 	rw.lock.RLock()
@@ -70,6 +72,7 @@ func (rw *RollingWindow) Reduce(fn func(b *Bucket)) {
 	}
 }
 
+// 获取上一个更新时间跨越了几个 bucket
 func (rw *RollingWindow) span() int {
 	offset := int(timex.Since(rw.lastTime) / rw.interval)
 	if 0 <= offset && offset < rw.size {
@@ -79,6 +82,7 @@ func (rw *RollingWindow) span() int {
 	return rw.size
 }
 
+// 窗口滑动
 func (rw *RollingWindow) updateOffset() {
 	span := rw.span()
 	if span <= 0 {
@@ -87,6 +91,7 @@ func (rw *RollingWindow) updateOffset() {
 
 	offset := rw.offset
 	// reset expired buckets
+	// 重置过期的 bucket
 	for i := 0; i < span; i++ {
 		rw.win.resetBucket((offset + i + 1) % rw.size)
 	}
@@ -94,6 +99,7 @@ func (rw *RollingWindow) updateOffset() {
 	rw.offset = (offset + span) % rw.size
 	now := timex.Now()
 	// align to interval time boundary
+	// 更新时间
 	rw.lastTime = now - (now-rw.lastTime)%rw.interval
 }
 
@@ -130,6 +136,7 @@ func newWindow(size int) *window {
 }
 
 func (w *window) add(offset int, v float64) {
+	// 往执行的 bucket 加入指定的指标
 	w.buckets[offset%w.size].add(v)
 }
 
@@ -144,6 +151,7 @@ func (w *window) resetBucket(offset int) {
 }
 
 // IgnoreCurrentBucket lets the Reduce call ignore current bucket.
+// 让 Reduce 调用忽略当前bucket
 func IgnoreCurrentBucket() RollingWindowOption {
 	return func(w *RollingWindow) {
 		w.ignoreCurrent = true
