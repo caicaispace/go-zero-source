@@ -32,6 +32,7 @@ func NewProba() *Proba {
 	}
 }
 
+// 检查给定概率是否为真
 // TrueOnProba checks if true on given probability.
 func (p *Proba) TrueOnProba(proba float64) (truth bool) {
 	p.lock.Lock()
@@ -68,10 +69,11 @@ func NewGoogleBreaker() *googleBreaker {
 	}
 }
 
+// 判断是否触发熔断
 func (b *googleBreaker) accept() error {
 	accepts, total := b.History()
 	weightedAccepts := b.k * float64(accepts)
-	// https://landing.google.com/sre/sre-book/chapters/handling-overload/#eq2101
+	// Google Sre过载保护算法 https://landing.google.com/sre/sre-book/chapters/handling-overload/#eq2101
 	dropRatio := math.Max(0, (float64(total-protection)-weightedAccepts)/float64(total+1))
 	if dropRatio <= 0 {
 		return nil
@@ -84,6 +86,9 @@ func (b *googleBreaker) accept() error {
 	return nil
 }
 
+// 熔断方法，执行请求时必须手动上报执行结果
+// 适用于简单无需自定义快速失败，无需自定义判定请求结果的场景
+// 相当于手动挡。。。
 func (b *googleBreaker) Allow() (internalPromise, error) {
 	if err := b.accept(); err != nil {
 		return nil, err
@@ -94,6 +99,8 @@ func (b *googleBreaker) Allow() (internalPromise, error) {
 	}, nil
 }
 
+// 熔断方法，自动上报执行结果
+// 自动挡。。。
 func (b *googleBreaker) DoReq(req func() error, fallback func(err error) error, acceptable Acceptable) error {
 	if err := b.accept(); err != nil {
 		if fallback != nil {
@@ -120,14 +127,19 @@ func (b *googleBreaker) DoReq(req func() error, fallback func(err error) error, 
 	return err
 }
 
+// 正常请求计数
 func (b *googleBreaker) markSuccess() {
 	b.stat.Add(1)
 }
 
+// 异常请求计数
 func (b *googleBreaker) markFailure() {
 	b.stat.Add(0)
 }
 
+// 历史数据
+// accepts 成功次数
+// total 总次数
 func (b *googleBreaker) History() (accepts, total int64) {
 	b.stat.Reduce(func(b *collection.Bucket) {
 		accepts += int64(b.Sum)
@@ -141,10 +153,12 @@ type googlePromise struct {
 	b *googleBreaker
 }
 
+// 正常请求计数
 func (p googlePromise) Accept() {
 	p.b.markSuccess()
 }
 
+// 异常请求计数
 func (p googlePromise) Reject() {
 	p.b.markFailure()
 }

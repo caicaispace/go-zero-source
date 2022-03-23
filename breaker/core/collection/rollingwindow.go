@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"gozerosource/breaker/core/timex"
+	"github.com/zeromicro/go-zero/core/timex"
 )
 
 type (
@@ -23,6 +23,7 @@ type (
 	}
 )
 
+// 初始化滑动窗口
 // NewRollingWindow returns a RollingWindow that with size buckets and time interval,
 // use opts to customize the RollingWindow.
 func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOption) *RollingWindow {
