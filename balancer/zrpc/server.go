@@ -134,7 +134,7 @@ func setupInterceptors(server internal.Server, c RpcServerConf, metrics *stat.Me
 			return err
 		}
 
-		// 添加 rpc 数据流拦截器
+		// 添加权限验证服务（rpc 数据流）
 		server.AddStreamInterceptors(serverinterceptors.StreamAuthorizeInterceptor(authenticator))
 		// 添加权限验证服务
 		server.AddUnaryInterceptors(serverinterceptors.UnaryAuthorizeInterceptor(authenticator))

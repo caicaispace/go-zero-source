@@ -16,6 +16,7 @@ var (
 	lock         sync.Mutex
 )
 
+// 服务降载拦截器
 // UnarySheddingInterceptor returns a func that does load shedding on processing unary requests.
 func UnarySheddingInterceptor(shedder load.Shedder, metrics *stat.Metrics) grpc.UnaryServerInterceptor {
 	ensureSheddingStat()

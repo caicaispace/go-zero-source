@@ -34,6 +34,7 @@ var (
 	})
 )
 
+// 服务状态上报 Prometheus 拦截器
 // PrometheusInterceptor is an interceptor that reports to prometheus server.
 func PrometheusInterceptor(ctx context.Context, method string, req, reply interface{},
 	cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption,

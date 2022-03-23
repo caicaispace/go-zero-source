@@ -139,7 +139,7 @@ func (p *p2cPicker) buildDoneFunc(c *subConn) func(info balancer.DoneInfo) {
 			td = 0
 		}
 		// 用牛顿冷却定律中的衰减函数模型计算EWMA算法中的β值
-		// https://www.ruanyifeng.com/blog/2012/03/ranking_algorithm_newton_s_law_of_cooling.html
+		// 牛顿冷却算法 https://www.ruanyifeng.com/blog/2012/03/ranking_algorithm_newton_s_law_of_cooling.html
 		w := math.Exp(float64(-td) / float64(decayTime))
 		// 保存本次请求的耗时
 		lag := int64(now) - start
@@ -151,7 +151,7 @@ func (p *p2cPicker) buildDoneFunc(c *subConn) func(info balancer.DoneInfo) {
 			w = 0
 		}
 		// 计算 EWMA 值
-		// EWMA（指数加权移动平均算法 https://blog.csdn.net/mzpmzk/article/details/80085929）
+		// EWMA（指数加权移动平均算法） https://blog.csdn.net/mzpmzk/article/details/80085929
 		atomic.StoreUint64(&c.lag, uint64(float64(olag)*w+float64(lag)*(1-w)))
 		success := initSuccess
 		if info.Err != nil && !codes.Acceptable(info.Err) {
@@ -178,23 +178,24 @@ func (p *p2cPicker) choose(c1, c2 *subConn) *subConn {
 		return c1
 	}
 
-	// c2 一直是负载较大的那个
+	// c2 一直是负载较大的 node
 	if c1.load() > c2.load() {
 		c1, c2 = c2, c1 // 交换变量，方便判断
 	}
 
 	pick := atomic.LoadInt64(&c2.pick)
-	// 如果本次被选中的时间 - 上次被选中的时间 > forcePick && 本次与上次时间点不同
-	// 则返回负载大的那个
+	// 如果(本次被选中的时间 - 上次被选中的时间 > forcePick && 本次与上次时间点不同)
+	// return 负载较大 node
 	if start-pick > forcePick && atomic.CompareAndSwapInt64(&c2.pick, pick, start) {
 		return c2
 	}
 
-	// 返回负载小的那个
+	// 返回负载较小 node
 	atomic.StoreInt64(&c1.pick, start)
 	return c1
 }
 
+// 输出所有节点状态信息
 func (p *p2cPicker) logStats() {
 	var stats []string
 

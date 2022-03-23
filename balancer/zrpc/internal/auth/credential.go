@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// 权限凭据
 // A Credential is used to authenticate.
 type Credential struct {
 	App   string
@@ -25,6 +26,7 @@ func (c *Credential) RequireTransportSecurity() bool {
 	return false
 }
 
+// 解析并获取权限凭据
 // ParseCredential parses credential from given ctx.
 func ParseCredential(ctx context.Context) Credential {
 	var credential Credential

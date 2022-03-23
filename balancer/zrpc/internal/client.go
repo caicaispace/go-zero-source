@@ -25,11 +25,13 @@ func init() {
 }
 
 type (
+	// 客户端接口
 	// Client interface wraps the Conn method.
 	Client interface {
 		Conn() *grpc.ClientConn
 	}
 
+	// 客户端配置项
 	// A ClientOptions is a client options.
 	ClientOptions struct {
 		NonBlock    bool
@@ -46,6 +48,7 @@ type (
 	}
 )
 
+// 初始化客户端
 // NewClient returns a Client.
 func NewClient(target string, opts ...ClientOption) (Client, error) {
 	var cli client
@@ -57,10 +60,12 @@ func NewClient(target string, opts ...ClientOption) (Client, error) {
 	return &cli, nil
 }
 
+// 获取客户端连接
 func (c *client) Conn() *grpc.ClientConn {
 	return c.conn
 }
 
+// 构建拨号配置
 func (c *client) buildDialOptions(opts ...ClientOption) []grpc.DialOption {
 	var cliOpts ClientOptions
 	for _, opt := range opts {
@@ -92,6 +97,7 @@ func (c *client) buildDialOptions(opts ...ClientOption) []grpc.DialOption {
 	return append(options, cliOpts.DialOptions...)
 }
 
+// 拨号
 func (c *client) dial(server string, opts ...ClientOption) error {
 	options := c.buildDialOptions(opts...)
 	timeCtx, cancel := context.WithTimeout(context.Background(), dialTimeout)
@@ -114,6 +120,7 @@ func (c *client) dial(server string, opts ...ClientOption) error {
 	return nil
 }
 
+// 拨号配置
 // WithDialOption returns a func to customize a ClientOptions with given dial option.
 func WithDialOption(opt grpc.DialOption) ClientOption {
 	return func(options *ClientOptions) {
@@ -121,6 +128,7 @@ func WithDialOption(opt grpc.DialOption) ClientOption {
 	}
 }
 
+// 非阻塞拨号设置
 // WithNonBlock sets the dialing to be nonblock.
 func WithNonBlock() ClientOption {
 	return func(options *ClientOptions) {
@@ -128,6 +136,7 @@ func WithNonBlock() ClientOption {
 	}
 }
 
+// 超时设置
 // WithTimeout returns a func to customize a ClientOptions with given timeout.
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(options *ClientOptions) {
@@ -135,6 +144,7 @@ func WithTimeout(timeout time.Duration) ClientOption {
 	}
 }
 
+// Grpc调用凭据设置
 // WithTransportCredentials return a func to make the gRPC calls secured with given credentials.
 func WithTransportCredentials(creds credentials.TransportCredentials) ClientOption {
 	return func(options *ClientOptions) {
@@ -143,6 +153,7 @@ func WithTransportCredentials(creds credentials.TransportCredentials) ClientOpti
 	}
 }
 
+// 自定义拦截器设置
 // WithUnaryClientInterceptor returns a func to customize a ClientOptions with given interceptor.
 func WithUnaryClientInterceptor(interceptor grpc.UnaryClientInterceptor) ClientOption {
 	return func(options *ClientOptions) {

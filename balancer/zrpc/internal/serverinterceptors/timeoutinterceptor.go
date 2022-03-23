@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// 服务超时拦截器
 // UnaryTimeoutInterceptor returns a func that sets timeout to incoming unary requests.
 func UnaryTimeoutInterceptor(timeout time.Duration) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,

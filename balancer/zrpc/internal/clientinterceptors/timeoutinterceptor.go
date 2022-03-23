@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// 服务超时拦截器
 // TimeoutInterceptor is an interceptor that controls timeout.
 func TimeoutInterceptor(timeout time.Duration) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,

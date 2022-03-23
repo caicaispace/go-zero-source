@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// 链路追踪拦截器
 // UnaryTracingInterceptor is a grpc.UnaryServerInterceptor for opentelemetry.
 func UnaryTracingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
@@ -41,6 +42,7 @@ func UnaryTracingInterceptor(ctx context.Context, req interface{}, info *grpc.Un
 	return resp, nil
 }
 
+// 链路追踪拦截器（流）
 // StreamTracingInterceptor returns a grpc.StreamServerInterceptor for opentelemetry.
 func StreamTracingInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo,
 	handler grpc.StreamHandler,

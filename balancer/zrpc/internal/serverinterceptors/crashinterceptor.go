@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// crash 拦截器（数据流）
+// 用于服务 crash 后自动恢复，保证鲁棒性
 // StreamCrashInterceptor catches panics in processing stream requests and recovers.
 func StreamCrashInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo,
 	handler grpc.StreamHandler,
@@ -21,6 +23,8 @@ func StreamCrashInterceptor(srv interface{}, stream grpc.ServerStream, info *grp
 	return handler(srv, stream)
 }
 
+// crash 拦截器
+// 用于服务 crash 后自动恢复，保证鲁棒性
 // UnaryCrashInterceptor catches panics in processing unary requests and recovers.
 func UnaryCrashInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,

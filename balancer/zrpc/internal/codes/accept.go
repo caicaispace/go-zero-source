@@ -5,6 +5,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// 检测是否是可接受错误
 // Acceptable checks if given error is acceptable.
 func Acceptable(err error) bool {
 	switch status.Code(err) {

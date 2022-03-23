@@ -20,6 +20,7 @@ const (
 	errorEvent
 )
 
+// 链路追踪拦截器
 // UnaryTracingInterceptor returns a grpc.UnaryClientInterceptor for opentelemetry.
 func UnaryTracingInterceptor(ctx context.Context, method string, req, reply interface{},
 	cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption,
@@ -45,6 +46,7 @@ func UnaryTracingInterceptor(ctx context.Context, method string, req, reply inte
 	return nil
 }
 
+// 链路追踪拦截器（流）
 // StreamTracingInterceptor returns a grpc.StreamClientInterceptor for opentelemetry.
 func StreamTracingInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn,
 	method string, streamer grpc.Streamer, opts ...grpc.CallOption,
@@ -173,6 +175,7 @@ func startSpan(ctx context.Context, method, target string) (context.Context, tra
 	return ctx, span
 }
 
+// 流包装器
 // wrapClientStream wraps s with given ctx and desc.
 func wrapClientStream(ctx context.Context, s grpc.ClientStream, desc *grpc.StreamDesc) *clientStream {
 	events := make(chan streamEvent)

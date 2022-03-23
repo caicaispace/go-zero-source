@@ -16,6 +16,7 @@ const defaultSlowThreshold = time.Millisecond * 500
 
 var slowThreshold = syncx.ForAtomicDuration(defaultSlowThreshold)
 
+// 执行时间拦截器（执行出错、执行慢输出日志）
 // DurationInterceptor is an interceptor that logs the processing time.
 func DurationInterceptor(ctx context.Context, method string, req, reply interface{},
 	cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption,
@@ -37,6 +38,7 @@ func DurationInterceptor(ctx context.Context, method string, req, reply interfac
 	return err
 }
 
+// 设置慢阈值
 // SetSlowThreshold sets the slow threshold.
 func SetSlowThreshold(threshold time.Duration) {
 	slowThreshold.Set(threshold)

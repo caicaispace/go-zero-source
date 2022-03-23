@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// 断路拦截器（数据流）
 // StreamBreakerInterceptor is an interceptor that acts as a circuit breaker.
 func StreamBreakerInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo,
 	handler grpc.StreamHandler,
@@ -19,6 +20,7 @@ func StreamBreakerInterceptor(srv interface{}, stream grpc.ServerStream, info *g
 	}, codes.Acceptable)
 }
 
+// 断路拦截器
 // UnaryBreakerInterceptor is an interceptor that acts as a circuit breaker.
 func UnaryBreakerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,

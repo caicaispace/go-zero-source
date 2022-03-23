@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// 断路拦截器
 // BreakerInterceptor is an interceptor that acts as a circuit breaker.
 func BreakerInterceptor(ctx context.Context, method string, req, reply interface{},
 	cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption,

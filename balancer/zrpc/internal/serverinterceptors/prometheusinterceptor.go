@@ -33,6 +33,7 @@ var (
 	})
 )
 
+// 服务状态上报 Prometheus 拦截器
 // UnaryPrometheusInterceptor reports the statistics to the prometheus server.
 func UnaryPrometheusInterceptor(ctx context.Context, req interface{},
 	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
