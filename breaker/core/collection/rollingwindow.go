@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -30,7 +31,7 @@ func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOpt
 	if size < 1 {
 		panic("size must be greater than 0")
 	}
-
+	fmt.Println(timex.Now())
 	w := &RollingWindow{
 		size:     size,
 		win:      newWindow(size),
@@ -99,7 +100,7 @@ func (rw *RollingWindow) updateOffset() {
 	rw.offset = (offset + span) % rw.size
 	now := timex.Now()
 	// align to interval time boundary
-	// 更新时间
+	// 更新时间(当前时间-上次时间余数)
 	rw.lastTime = now - (now-rw.lastTime)%rw.interval
 }
 

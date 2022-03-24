@@ -19,14 +19,13 @@ const (
 
 func Test_RollingWindow(t *testing.T) {
 	bucketDuration := time.Duration(int64(windowSec) / int64(buckets))
+	fmt.Println(bucketDuration)
 	// st := collection.NewRollingWindow(buckets, bucketDuration, collection.IgnoreCurrentBucket())
 	st := collection.NewRollingWindow(buckets, bucketDuration)
-	st.Add(1)
-	st.Add(1)
-	st.Add(1)
-	st.Add(2)
-	st.Add(2)
-	st.Add(0)
+	for i := 0; i < 50; i++ {
+		time.Sleep(250 * time.Millisecond)
+		st.Add(float64(i))
+	}
 	var accepts int64
 	var total int64
 	st.Reduce(func(b *collection.Bucket) {

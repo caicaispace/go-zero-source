@@ -34,9 +34,11 @@ func init() {
 			select {
 			case <-cpuTicker.C:
 				threading.RunSafe(func() {
+					// cpu滑动平均值
 					curUsage := internal.RefreshCpu()
 					prevUsage := atomic.LoadInt64(&cpuUsage)
 					// cpu = cpuᵗ⁻¹ * beta + cpuᵗ * (1 - beta)
+					// 滑动平均算法
 					usage := int64(float64(prevUsage)*beta + float64(curUsage)*(1-beta))
 					atomic.StoreInt64(&cpuUsage, usage)
 				})
