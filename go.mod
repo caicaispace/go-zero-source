@@ -3,6 +3,8 @@ module gozerosource
 go 1.17
 
 require (
+	github.com/golang-jwt/jwt/v4 v4.2.0
+	github.com/justinas/alice v1.2.0
 	github.com/zeromicro/go-zero v1.3.1
 	go.opentelemetry.io/otel v1.3.0
 	go.opentelemetry.io/otel/trace v1.3.0
@@ -29,6 +31,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gnostic v0.4.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
