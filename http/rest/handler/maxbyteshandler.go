@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"gozerosource/rest/internal"
+	"gozerosource/http/rest/internal"
 )
 
 // MaxBytesHandler returns a middleware that limit reading of http request body.

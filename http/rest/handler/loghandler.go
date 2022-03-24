@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"gozerosource/rest/httpx"
-	"gozerosource/rest/internal"
+	"gozerosource/http/rest/httpx"
+	"gozerosource/http/rest/internal"
 
 	"github.com/zeromicro/go-zero/core/iox"
 	"github.com/zeromicro/go-zero/core/logx"

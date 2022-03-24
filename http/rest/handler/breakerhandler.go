@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"gozerosource/rest/httpx"
-	"gozerosource/rest/internal/response"
+	"gozerosource/http/rest/httpx"
+	"gozerosource/http/rest/internal/response"
 
 	"github.com/zeromicro/go-zero/core/breaker"
 	"github.com/zeromicro/go-zero/core/logx"

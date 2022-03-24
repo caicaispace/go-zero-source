@@ -4,71 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
-	"time"
-
-	"gozerosource/rest"
-
-	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/service"
 )
 
-type ServiceContext struct {
-	Config rest.RestConf
-}
-
-func NewServiceContext(c rest.RestConf) *ServiceContext {
-	return &ServiceContext{
-		Config: c,
-	}
-}
-
-func IndexHandler(svcCtx *ServiceContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(">>>>>>>>>>>>>>>>")
-		w.Write([]byte("pong"))
-	}
-}
-
-func ServerStart() {
-	c := rest.RestConf{
-		Host:         "127.0.0.1",
-		Port:         8081,
-		MaxConns:     100,
-		MaxBytes:     1048576,
-		Timeout:      1000,
-		CpuThreshold: 800,
-		ServiceConf: service.ServiceConf{
-			Log: logx.LogConf{
-				Path: "./",
-			},
-		},
-	}
-	server := rest.MustNewServer(c)
-	// defer server.Stop()
-	ctx := NewServiceContext(c)
-	server.AddRoute(rest.Route{
-		Method:  http.MethodGet,
-		Path:    "/ping",
-		Handler: IndexHandler(ctx),
-	})
-
-	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
-	server.Start()
-}
-
 func Test_Rest(t *testing.T) {
-	go func() {
-		ServerStart()
-	}()
-	time.Sleep(1 * time.Second)
-
 	for _, tt := range [...]struct {
 		name string
 
@@ -108,7 +52,7 @@ func Test_Rest(t *testing.T) {
 			if err != nil {
 				t.Errorf("ReadAll: %v", err)
 			}
-			fmt.Printf(" --> %s", string(slurp))
+			// fmt.Printf(" --> %s", string(slurp))
 			if string(slurp) != tt.wantBody {
 				t.Errorf("Body = %q; want %q", slurp, tt.wantBody)
 			}
@@ -152,7 +96,6 @@ func NewRequest(method, target string, body io.Reader) *http.Request {
 	// documentation and example source code and should not be
 	// used publicly.
 	req.RemoteAddr = "192.0.2.1:1234"
-
 	if req.Host == "" {
 		req.Host = "example.com"
 	}

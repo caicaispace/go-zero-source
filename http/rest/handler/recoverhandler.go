@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"gozerosource/rest/internal"
+	"gozerosource/http/rest/internal"
 )
 
 // RecoverHandler returns a middleware that recovers if panic happens.

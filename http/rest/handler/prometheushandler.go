@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"gozerosource/rest/internal/response"
+	"gozerosource/http/rest/internal/response"
 
 	"github.com/zeromicro/go-zero/core/metric"
 	"github.com/zeromicro/go-zero/core/prometheus"

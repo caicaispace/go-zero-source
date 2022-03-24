@@ -7,11 +7,11 @@ import (
 	"path"
 	"time"
 
-	"gozerosource/rest/internal/cors"
+	"gozerosource/http/rest/internal/cors"
 
-	"gozerosource/rest/handler"
-	"gozerosource/rest/httpx"
-	"gozerosource/rest/router"
+	"gozerosource/http/rest/handler"
+	"gozerosource/http/rest/httpx"
+	"gozerosource/http/rest/router"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

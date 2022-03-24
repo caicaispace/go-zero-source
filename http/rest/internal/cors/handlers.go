@@ -3,7 +3,7 @@ package cors
 import (
 	"net/http"
 
-	"gozerosource/rest/internal/response"
+	"gozerosource/http/rest/internal/response"
 )
 
 const (
