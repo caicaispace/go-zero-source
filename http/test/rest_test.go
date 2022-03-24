@@ -1,10 +1,8 @@
 package rest_test
 
 import (
-	"bufio"
-	"bytes"
-	"crypto/tls"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -23,7 +21,7 @@ func Test_Rest(t *testing.T) {
 		wantBody string
 	}{
 		{
-			name:   "GET with full URL",
+			name:   "GET with ping url",
 			method: "GET",
 			uri:    "http://127.0.0.1:8081/ping",
 			body:   nil,
@@ -47,68 +45,33 @@ func Test_Rest(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewRequest(tt.method, tt.uri, tt.body)
-			slurp, err := io.ReadAll(got.Body)
+			body, err := NewRequest(tt.method, tt.uri, tt.body)
 			if err != nil {
 				t.Errorf("ReadAll: %v", err)
 			}
-			// fmt.Printf(" --> %s", string(slurp))
-			if string(slurp) != tt.wantBody {
-				t.Errorf("Body = %q; want %q", slurp, tt.wantBody)
+			if string(body) != tt.wantBody {
+				t.Errorf("Body = %q; want %q", body, tt.wantBody)
 			}
 		})
 	}
 }
 
-func NewRequest(method, target string, body io.Reader) *http.Request {
-	if method == "" {
-		method = "GET"
-	}
-	req, err := http.ReadRequest(bufio.NewReader(strings.NewReader(method + " " + target + " HTTP/1.0\r\n\r\n")))
+func NewRequest(method, url string, bodyRow io.Reader) ([]byte, error) {
+	req, err := http.NewRequest(method, url, bodyRow)
 	if err != nil {
-		panic("invalid NewRequest arguments; " + err.Error())
+		return nil, err
 	}
-
-	// HTTP/1.0 was used above to avoid needing a Host field. Change it to 1.1 here.
-	req.Proto = "HTTP/1.1"
-	req.ProtoMinor = 1
-	req.Close = false
-
-	if body != nil {
-		switch v := body.(type) {
-		case *bytes.Buffer:
-			req.ContentLength = int64(v.Len())
-		case *bytes.Reader:
-			req.ContentLength = int64(v.Len())
-		case *strings.Reader:
-			req.ContentLength = int64(v.Len())
-		default:
-			req.ContentLength = -1
-		}
-		if rc, ok := body.(io.ReadCloser); ok {
-			req.Body = rc
-		} else {
-			req.Body = io.NopCloser(body)
-		}
+	cli := &http.Client{}
+	rsp, err := cli.Do(req)
+	if err != nil {
+		return nil, err
 	}
-
-	// 192.0.2.0/24 is "TEST-NET" in RFC 5737 for use solely in
-	// documentation and example source code and should not be
-	// used publicly.
-	req.RemoteAddr = "192.0.2.1:1234"
-	if req.Host == "" {
-		req.Host = "example.com"
+	defer rsp.Body.Close()
+	body, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, err
 	}
-
-	if strings.HasPrefix(target, "https://") {
-		req.TLS = &tls.ConnectionState{
-			Version:           tls.VersionTLS12,
-			HandshakeComplete: true,
-			ServerName:        req.Host,
-		}
-	}
-
-	return req
+	return body, nil
 }
 
 func TestHandlePost(t *testing.T) {
@@ -116,14 +79,10 @@ func TestHandlePost(t *testing.T) {
 	mux.HandleFunc("/topic/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
-
 	reader := strings.NewReader(`{"title":"The Go Standard Library","content":"It contains many packages."}`)
 	r, _ := http.NewRequest(http.MethodPost, "/topic/", reader)
-
 	w := httptest.NewRecorder()
-
 	mux.ServeHTTP(w, r)
-
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Response code is %v", resp.StatusCode)

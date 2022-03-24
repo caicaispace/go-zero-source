@@ -36,7 +36,7 @@ func main() {
 		CpuThreshold: 800,
 		ServiceConf: service.ServiceConf{
 			Log: logx.LogConf{
-				Path: "./",
+				Path: "./log",
 			},
 		},
 	}
