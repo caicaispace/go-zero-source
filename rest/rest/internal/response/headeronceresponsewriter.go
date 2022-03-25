@@ -9,6 +9,8 @@ import (
 
 // HeaderOnceResponseWriter is a http.ResponseWriter implementation
 // that only the first WriterHeader takes effect.
+// HeaderOnceResponseWriter 是一个http.ResponseWriter的实现
+// 只有第一个WriterHeader生效
 type HeaderOnceResponseWriter struct {
 	w           http.ResponseWriter
 	wroteHeader bool

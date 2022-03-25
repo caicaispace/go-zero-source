@@ -26,22 +26,25 @@ const topCpuUsage = 1000
 var ErrSignatureConfig = errors.New("bad config for Signature")
 
 type engine struct {
-	conf                 RestConf
-	routes               []featuredRoutes
-	unauthorizedCallback handler.UnauthorizedCallback
-	unsignedCallback     handler.UnsignedCallback
-	middlewares          []Middleware
-	shedder              load.Shedder
-	priorityShedder      load.Shedder
-	tlsConfig            *tls.Config
+	conf                 RestConf                     // rest 配置
+	routes               []featuredRoutes             // 路由
+	unauthorizedCallback handler.UnauthorizedCallback // 权限验证失败回调
+	unsignedCallback     handler.UnsignedCallback     // 签名验证失败回调
+	middlewares          []Middleware                 // 中间件
+	shedder              load.Shedder                 // 降载处理器
+	priorityShedder      load.Shedder                 // 更高降载阀值处理器
+	tlsConfig            *tls.Config                  // tls 配置
 }
 
+// 引擎初始化
 func newEngine(c RestConf) *engine {
 	srv := &engine{
 		conf: c,
 	}
 	if c.CpuThreshold > 0 {
+		// 加载服务降载处理器
 		srv.shedder = load.NewAdaptiveShedder(load.WithCpuThreshold(c.CpuThreshold))
+		// 加载更高降载阀值处理器
 		srv.priorityShedder = load.NewAdaptiveShedder(load.WithCpuThreshold(
 			(c.CpuThreshold + topCpuUsage) >> 1))
 	}
@@ -49,27 +52,34 @@ func newEngine(c RestConf) *engine {
 	return srv
 }
 
+// 添加路由
 func (ng *engine) addRoutes(r featuredRoutes) {
 	ng.routes = append(ng.routes, r)
 }
 
+// 注入权限处理方法
 func (ng *engine) appendAuthHandler(fr featuredRoutes, chain alice.Chain,
 	verifier func(alice.Chain) alice.Chain,
 ) alice.Chain {
 	if fr.jwt.enabled {
 		if len(fr.jwt.prevSecret) == 0 {
-			chain = chain.Append(handler.Authorize(fr.jwt.secret,
-				handler.WithUnauthorizedCallback(ng.unauthorizedCallback)))
+			chain = chain.Append(handler.Authorize(
+				fr.jwt.secret,
+				handler.WithUnauthorizedCallback(ng.unauthorizedCallback),
+			))
 		} else {
-			chain = chain.Append(handler.Authorize(fr.jwt.secret,
+			chain = chain.Append(handler.Authorize(
+				fr.jwt.secret,
 				handler.WithPrevSecret(fr.jwt.prevSecret),
-				handler.WithUnauthorizedCallback(ng.unauthorizedCallback)))
+				handler.WithUnauthorizedCallback(ng.unauthorizedCallback)),
+			)
 		}
 	}
 
 	return verifier(chain)
 }
 
+// 绑定特色路由
 func (ng *engine) bindFeaturedRoutes(router httpx.Router, fr featuredRoutes, metrics *stat.Metrics) error {
 	verifier, err := ng.signatureVerifier(fr.signature)
 	if err != nil {
@@ -85,6 +95,7 @@ func (ng *engine) bindFeaturedRoutes(router httpx.Router, fr featuredRoutes, met
 	return nil
 }
 
+// 绑定路由
 func (ng *engine) bindRoute(fr featuredRoutes, router httpx.Router, metrics *stat.Metrics,
 	route Route, verifier func(chain alice.Chain) alice.Chain,
 ) error {
@@ -111,6 +122,7 @@ func (ng *engine) bindRoute(fr featuredRoutes, router httpx.Router, metrics *sta
 	return router.Handle(route.Method, route.Path, handle)
 }
 
+// 批量绑定路由
 func (ng *engine) bindRoutes(router httpx.Router) error {
 	metrics := ng.createMetrics()
 
@@ -131,6 +143,7 @@ func (ng *engine) checkedTimeout(timeout time.Duration) time.Duration {
 	return time.Duration(ng.conf.Timeout) * time.Millisecond
 }
 
+// 加载服务指标监控器
 func (ng *engine) createMetrics() *stat.Metrics {
 	var metrics *stat.Metrics
 
@@ -160,6 +173,7 @@ func (ng *engine) getShedder(priority bool) load.Shedder {
 }
 
 // notFoundHandler returns a middleware that handles 404 not found requests.
+// 获取路由未找到中间件
 func (ng *engine) notFoundHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		chain := alice.New(
@@ -184,14 +198,17 @@ func (ng *engine) setTlsConfig(cfg *tls.Config) {
 	ng.tlsConfig = cfg
 }
 
+// 设置权限验证失败回调
 func (ng *engine) setUnauthorizedCallback(callback handler.UnauthorizedCallback) {
 	ng.unauthorizedCallback = callback
 }
 
+// 设置签名验证失败回调
 func (ng *engine) setUnsignedCallback(callback handler.UnsignedCallback) {
 	ng.unsignedCallback = callback
 }
 
+// 签名校验
 func (ng *engine) signatureVerifier(signature signatureSetting) (func(chain alice.Chain) alice.Chain, error) {
 	if !signature.enabled {
 		return func(chain alice.Chain) alice.Chain {

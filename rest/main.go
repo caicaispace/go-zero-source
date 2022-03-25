@@ -32,7 +32,7 @@ func CheckHandler(svcCtx *ServiceContext) http.HandlerFunc {
 	}
 }
 
-func main() {
+func ServerStart() {
 	c := rest.RestConf{
 		Host:         "127.0.0.1",
 		Port:         8081,
@@ -65,4 +65,8 @@ func main() {
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()
+}
+
+func main() {
+	ServerStart()
 }

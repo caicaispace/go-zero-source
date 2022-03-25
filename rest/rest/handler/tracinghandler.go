@@ -11,6 +11,7 @@ import (
 )
 
 // TracingHandler return a middleware that process the opentelemetry.
+// 链路追踪中间件
 func TracingHandler(serviceName, path string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		propagator := otel.GetTextMapPropagator()
