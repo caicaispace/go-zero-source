@@ -4,20 +4,12 @@ all: build
 
 # analyse
 vet:
-	@go vet ./breaker/...; true
-	@go vet ./shedding/...; true
-	@go vet ./limit/...; true
-	@go vet ./balancer/...; true
-	@go vet ./rest/...; true
+	@go vet ./code/...; true
 
 # fotmat
 # go install mvdan.cc/gofumpt@latest
 fmt:
-	@gofumpt -l -w ./breaker/; true
-	@gofumpt -l -w ./shedding/; true
-	@gofumpt -l -w ./limit/; true
-	@gofumpt -l -w ./balancer/; true
-	@gofumpt -l -w ./rest/; true
+	@gofumpt -l -w ./code/; true
 
 clean:
 	go clean -i .
