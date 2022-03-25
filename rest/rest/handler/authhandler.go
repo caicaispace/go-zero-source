@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"gozerosource/http/rest/internal/response"
-	"gozerosource/http/rest/token"
+	"gozerosource/rest/rest/internal/response"
+	"gozerosource/rest/rest/token"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/zeromicro/go-zero/core/logx"

@@ -12,13 +12,10 @@ import (
 
 func Test_Rest(t *testing.T) {
 	for _, tt := range [...]struct {
-		name string
-
-		method, uri string
-		body        io.Reader
-
-		want     *http.Request
-		wantBody string
+		name, method, uri string
+		body              io.Reader
+		want              *http.Request
+		wantBody          string
 	}{
 		{
 			name:   "GET with ping url",
@@ -34,14 +31,29 @@ func Test_Rest(t *testing.T) {
 					RawPath: "/ping",
 					Host:    "127.0.0.1:8081",
 				},
-				Header:     http.Header{},
-				Proto:      "HTTP/1.1",
-				ProtoMajor: 1,
-				ProtoMinor: 1,
-				RemoteAddr: "192.0.2.1:1234",
-				RequestURI: "http://127.0.0.1:8081",
+				Header: http.Header{},
+				Proto:  "HTTP/1.1",
 			},
 			wantBody: "pong",
+		},
+		{
+			name:   "GET with check url",
+			method: "GET",
+			uri:    "http://127.0.0.1:8081/check",
+			body:   nil,
+			want: &http.Request{
+				Method: "GET",
+				Host:   "127.0.0.1:8081",
+				URL: &url.URL{
+					Scheme:  "http",
+					Path:    "/check",
+					RawPath: "/check",
+					Host:    "127.0.0.1:8081",
+				},
+				Header: http.Header{},
+				Proto:  "HTTP/1.1",
+			},
+			wantBody: "ok",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

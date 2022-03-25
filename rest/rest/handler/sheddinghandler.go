@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"sync"
 
-	"gozerosource/http/rest/httpx"
-	"gozerosource/http/rest/internal/response"
+	"gozerosource/rest/rest/httpx"
+	"gozerosource/rest/rest/internal/response"
 
 	"github.com/zeromicro/go-zero/core/load"
 	"github.com/zeromicro/go-zero/core/logx"

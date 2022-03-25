@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"gozerosource/http/rest/httpx"
-	"gozerosource/http/rest/internal/security"
+	"gozerosource/rest/rest/httpx"
+	"gozerosource/rest/rest/internal/security"
 
 	"github.com/zeromicro/go-zero/core/codec"
 	"github.com/zeromicro/go-zero/core/logx"

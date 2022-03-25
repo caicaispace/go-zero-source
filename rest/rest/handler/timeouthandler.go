@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"gozerosource/http/rest/httpx"
-	"gozerosource/http/rest/internal"
+	"gozerosource/rest/rest/httpx"
+	"gozerosource/rest/rest/internal"
 )
 
 const (

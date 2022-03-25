@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"gozerosource/http/rest/internal/response"
+	"gozerosource/rest/rest/internal/response"
 
-	"gozerosource/http/rest/handler"
-	"gozerosource/http/rest/httpx"
-	"gozerosource/http/rest/internal"
+	"gozerosource/rest/rest/handler"
+	"gozerosource/rest/rest/httpx"
+	"gozerosource/rest/rest/internal"
 
 	"github.com/justinas/alice"
 	"github.com/zeromicro/go-zero/core/codec"
