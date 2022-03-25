@@ -4,13 +4,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
+	"time"
+
+	"gozerosource/code/rest"
 )
 
 func Test_Rest(t *testing.T) {
+	go rest.ServerStart()
+	time.Sleep(time.Millisecond)
 	for _, tt := range [...]struct {
 		name, method, uri string
 		body              io.Reader
@@ -84,19 +87,4 @@ func NewRequest(method, url string, bodyRow io.Reader) ([]byte, error) {
 		return nil, err
 	}
 	return body, nil
-}
-
-func TestHandlePost(t *testing.T) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/topic/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
-	})
-	reader := strings.NewReader(`{"title":"The Go Standard Library","content":"It contains many packages."}`)
-	r, _ := http.NewRequest(http.MethodPost, "/topic/", reader)
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, r)
-	resp := w.Result()
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Response code is %v", resp.StatusCode)
-	}
 }
