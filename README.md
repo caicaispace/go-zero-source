@@ -75,7 +75,7 @@ go-zero 给我们提供了如下组件与服务，我们来逐一阅读分析
 
 二叉查找树可参见源码
 
-[github.com/zeromicro/go-zero/core/search](github.com/zeromicro/go-zero/core/search)
+https://github.com/zeromicro/go-zero/tree/master/core/search
 
 go-zero 路由实现了 http\server.go Handler interface 来拦截每个请求
 
@@ -243,8 +243,8 @@ func WithJwtTransition(secret, prevSecret string) RouteOption {
 
 权限控制核心文件带注释代码如下，大家可以参阅
 
-- https://github.com/TTSimple/go-zero-source/blob/master/code/rest/rest/handler/authhandler.go
-- https://github.com/TTSimple/gozerosource/code/rest/rest/token/tokenparser.go
+- https://github.com/TTSimple/go-zero-source/tree/master/code/rest/rest/handler/authhandler.go
+- https://github.com/TTSimple/go-zero-source/tree/master/code/rest/rest/token/tokenparser.go
 
 go-zero 提供 jwt 权限控制，jwt 只做登录与未登录验证，细粒度的权限验证我们可以使用其他成熟方案
 
