@@ -1,6 +1,17 @@
 package breaker
 
 type (
+	// 自定义判定执行结果
+	Acceptable func(err error) bool
+	// 手动回调
+	Promise interface {
+		// Accept tells the Breaker that the call is successful.
+		// 请求成功
+		Accept()
+		// Reject tells the Breaker that the call is failed.
+		// 请求失败
+		Reject(reason string)
+	}
 	Breaker interface {
 		// 熔断器名称
 		Name() string
@@ -27,8 +38,11 @@ type (
 		// acceptable - 支持自定义判定执行结果
 		DoWithFallbackAcceptable(req func() error, fallback func(err error) error, acceptable Acceptable) error
 	}
-	// Promise interface defines the callbacks that returned by Breaker.Allow.
-	Promise internalPromise
+
+	internalPromise interface {
+		Accept()
+		Reject()
+	}
 )
 
 func defaultAcceptable(err error) bool {
@@ -49,7 +63,7 @@ func (b *breaker) Name() string {
 	return ""
 }
 
-func (b *breaker) Allow() (Promise, error) {
+func (b *breaker) Allow() (internalPromise, error) {
 	return b.GB.Allow()
 }
 
