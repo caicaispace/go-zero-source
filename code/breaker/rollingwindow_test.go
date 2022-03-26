@@ -23,7 +23,7 @@ func Test_RollingWindow(t *testing.T) {
 	// st := collection.NewRollingWindow(buckets, bucketDuration, collection.IgnoreCurrentBucket())
 	st := collection.NewRollingWindow(buckets, bucketDuration)
 	for i := 0; i < 50; i++ {
-		time.Sleep(250 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 		st.Add(float64(i))
 	}
 	var accepts int64

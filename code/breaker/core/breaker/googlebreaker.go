@@ -12,9 +12,9 @@ import (
 
 const (
 	// 250ms for bucket duration
-	windowSec  = time.Second * 10
-	buckets    = 40
-	k          = 1.5
+	windowSec  = time.Second * 10 // 窗口时间
+	buckets    = 40               // bucket 数量
+	k          = 1.5              // 倍值（越小越敏感）
 	protection = 5
 )
 

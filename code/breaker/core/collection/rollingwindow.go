@@ -1,7 +1,6 @@
 package collection
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -18,7 +17,7 @@ type (
 		size          int           // 窗口大小
 		win           *window       // 窗口
 		interval      time.Duration // 窗口间隔周期
-		offset        int
+		offset        int           // 窗口 offset
 		ignoreCurrent bool
 		lastTime      time.Duration // start time of the last bucket
 	}
@@ -31,7 +30,6 @@ func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOpt
 	if size < 1 {
 		panic("size must be greater than 0")
 	}
-	fmt.Println(timex.Now())
 	w := &RollingWindow{
 		size:     size,
 		win:      newWindow(size),
@@ -105,26 +103,33 @@ func (rw *RollingWindow) updateOffset() {
 }
 
 // Bucket defines the bucket that holds sum and num of additions.
+// 桶
+// sum 数据总量
+// count 桶数量
 type Bucket struct {
 	Sum   float64
 	Count int64
 }
 
+// 添加数据
 func (b *Bucket) add(v float64) {
 	b.Sum += v
 	b.Count++
 }
 
+// 桶重置
 func (b *Bucket) reset() {
 	b.Sum = 0
 	b.Count = 0
 }
 
+// 滑动窗口（环形数组）
 type window struct {
 	buckets []*Bucket
 	size    int
 }
 
+// 初始化窗口
 func newWindow(size int) *window {
 	buckets := make([]*Bucket, size)
 	for i := 0; i < size; i++ {
@@ -136,17 +141,19 @@ func newWindow(size int) *window {
 	}
 }
 
+// 往执行的 bucket 加入指定的指标
 func (w *window) add(offset int, v float64) {
-	// 往执行的 bucket 加入指定的指标
 	w.buckets[offset%w.size].add(v)
 }
 
+// 遍历 buckets
 func (w *window) reduce(start, count int, fn func(b *Bucket)) {
 	for i := 0; i < count; i++ {
 		fn(w.buckets[(start+i)%w.size])
 	}
 }
 
+// 重置 buckets
 func (w *window) resetBucket(offset int) {
 	w.buckets[offset%w.size].reset()
 }
