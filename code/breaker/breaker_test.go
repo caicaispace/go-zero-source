@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gozerosource/code/breaker/core/breaker"
+	"gozerosource/code/core/breaker"
 )
 
 // https://juejin.cn/post/6891836358155829262

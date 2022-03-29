@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gozerosource/code/breaker/core/breaker"
+	"gozerosource/code/core/breaker"
 )
 
 // 简单场景直接判断对象是否被熔断，执行请求后必须需手动上报执行结果至熔断器。

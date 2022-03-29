@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"gozerosource/code/breaker/core/collection"
+	"gozerosource/code/core/collection"
 )
 
 const (

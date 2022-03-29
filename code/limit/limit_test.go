@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gozerosource/code/limit/core/syncx"
+	"gozerosource/code/core/syncx"
 )
 
 func Test_limit(t *testing.T) {

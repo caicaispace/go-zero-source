@@ -6,9 +6,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gozerosource/code/shedding/core/stat/internal"
-	"gozerosource/code/shedding/core/syncx"
-	"gozerosource/code/shedding/core/threading"
+	"gozerosource/code/core/stat/internal"
+	"gozerosource/code/core/syncx"
+
+	"github.com/zeromicro/go-zero/core/threading"
 )
 
 const (

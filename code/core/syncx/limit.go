@@ -3,7 +3,7 @@ package syncx
 import (
 	"errors"
 
-	"gozerosource/code/limit/core/lang"
+	"github.com/zeromicro/go-zero/core/lang"
 )
 
 // ErrLimitReturn indicates that the more than borrowed elements were returned.

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"gozerosource/code/limit/core/limit"
+	"gozerosource/code/core/limit"
 
 	"github.com/zeromicro/go-zero/core/stores/redis"
 )

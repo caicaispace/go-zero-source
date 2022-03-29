@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"gozerosource/code/shedding/core/iox"
-	"gozerosource/code/shedding/core/lang"
+	"github.com/zeromicro/go-zero/core/iox"
+	"github.com/zeromicro/go-zero/core/lang"
 )
 
 const cgroupDir = "/sys/fs/cgroup"
