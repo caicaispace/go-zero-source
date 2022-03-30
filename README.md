@@ -629,4 +629,4 @@ func StoreUint32(addr *uint32, val uint32)
 
 引用文章：
 
-- [微服务治理之如何优雅应对突发流量洪峰](
+- [微服务治理之如何优雅应对突发流量洪峰](https://juejin.cn/post/7033581706342989831)
