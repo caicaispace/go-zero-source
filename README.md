@@ -458,3 +458,175 @@ type (
 - [go-zero服务治理-自适应熔断器](https://juejin.cn/post/7028536954262126605)
 - [golang-熔断器](https://www.jianshu.com/p/218d8f3d9763)
 - [服务自适应熔断原理与实现](https://juejin.cn/post/6891836358155829262)
+
+#### 过载保护
+
+入口源码地址：github.com/zeromicro/go-zero/rest/handler/sheddinghandler.go
+
+在看文章之前可以看看万总的这篇文章[《服务自适应降载保护设计》](https://go-zero.dev/cn/loadshedding.html)，文章已经给我们介绍很清楚了，从基础原理到架构需求再到代码注释，无不细致入微，感谢万总。
+
+之前在设计架构的时候对于服务过载保护只会想到在客户端、网关层来实现，没考虑过在服务端也可以达到这种效果，一来涉及这种技术的文章较少(可能是我孤陋寡闻了)，二来服务端不确定的情况比较多，比如服务器出现问题，或者其他在同一台服务器运行的软件把服务器直接搞挂，这样在服务端实现过载保护在某些层面来说鲁棒性可能不太好 ，但在和熔断器结合后，用服务端来实现过载保护也是合情合理的。
+
+我们来看下过载保护设计到的几个算法
+
+##### 自旋锁
+
+- 原理
+
+问：假设有1个变量`lock`，2个协程怎么用锁实现`lock++`，`lock`的结果最后为2
+
+答：
+
+1. 锁也是1个变量，初值设为0；
+
+2. 1个协程将锁原子性的置为1；
+
+3. 操作变量`lock`；
+
+4. 操作完成后，将锁原子性的置为0，释放锁。
+
+5. 在1个协程获取锁时，另一个协程一直尝试，直到能够获取锁（不断循环），这就是自旋锁。
+
+2、自旋锁的缺点
+
+某个协程持有锁时间长，等待的协程一直在循环等待，消耗CPU资源。
+
+不公平，有可能存在有的协程等待时间过程，出现线程饥饿（这里就是协程饥饿）
+
+- go-zero  自旋锁源码
+
+```go
+type SpinLock struct {
+    // 锁变量
+	lock uint32
+}
+
+// Lock locks the SpinLock.
+func (sl *SpinLock) Lock() {
+	for !sl.TryLock() {
+        // 暂停当前goroutine，让其他goroutine先行运算
+		runtime.Gosched()
+	}
+}
+
+// TryLock tries to lock the SpinLock.
+func (sl *SpinLock) TryLock() bool {
+    // 原子交换，0换成1
+	return atomic.CompareAndSwapUint32(&sl.lock, 0, 1)
+}
+
+// Unlock unlocks the SpinLock.
+func (sl *SpinLock) Unlock() {
+    // 原子置零
+	atomic.StoreUint32(&sl.lock, 0)
+}
+
+```
+
+源码中还使用了 golang 的运行时操作包 `runtime`
+
+`runtime.Gosched()`暂停当前goroutine，让其他goroutine先行运算
+
+> 注意：只是暂停，不是挂起。
+>
+> 当时间片轮转到该协程时，Gosched()后面的操作将自动恢复
+
+我们来写写几行代码，看看他的作用是啥
+
+```go
+func output(s string) {
+	for i := 0; i < 3; i++ {
+		fmt.Println(s)
+	}
+}
+// 未使用Gosched的代码
+func Test_GoschedDisable(t *testing.T) {
+	go output("goroutine 2")
+	output("goroutine 1")
+}
+// === RUN   Test_GoschedDisable
+// goroutine 1
+// goroutine 1
+// goroutine 1
+// --- PASS: Test_GoschedDisable (0.00s)
+```
+
+结论：还没等到子协程执行，主协程就已经执行完退出了，子协程将不再执行，所以打印的全部是主协程的数据。当然，实际上这个执行结果也是不确定的，只是大概率出现以上输出，因为主协程和子协程间并没有绝对的顺序关系
+
+```go
+func output(s string) {
+	for i := 0; i < 3; i++ {
+		fmt.Println(s)
+	}
+}
+// 使用Gosched的代码
+func Test_GoschedEnable(t *testing.T) {
+	go output("goroutine 2")
+	runtime.Gosched()
+	output("goroutine 1")
+}
+
+// === RUN   Test_GoschedEnable
+// goroutine 2
+// goroutine 2
+// goroutine 2
+// goroutine 1
+// goroutine 1
+// goroutine 1
+// --- PASS: Test_GoschedEnable (0.00s)
+```
+
+结论：在打印goroutine 1之前，主协程调用了runtime.Gosched()方法，暂停了主协程。子协程获得了调度，从而先行打印了goroutine 2。主协程不是一定要等其他协程执行完才会继续执行，而是一定时间。如果这个时间内其他协程没有执行完，那么主协程将继续执行，例如以下例子
+
+```go
+func output(s string) {
+	for i := 0; i < 3; i++ {
+		fmt.Println(s)
+	}
+}
+// 使用Gosched的代码，并故意延长子协程的执行时间，看主协程是否一直等待
+func Test_GoschedEnableAndSleep(t *testing.T) {
+	go func() {
+		time.Sleep(5000)
+		output("goroutine 2")
+	}()
+	runtime.Gosched()
+	output("goroutine 1")
+}
+// === RUN   Test_GoschedEnableAndSleep
+// goroutine 2
+// goroutine 2
+// goroutine 2
+// goroutine 1
+// goroutine 1
+// goroutine 1
+// --- PASS: Test_GoschedEnableAndSleep (0.00s)
+```
+
+结论：即使我们故意延长子协程的执行时间，主协程还是会一直等待子协程执行完才会执行。
+
+源码中还使用了 golang 的原子操作包 `atomic`
+
+`atomic.CompareAndSwapUint32()`函数用于对`uint32`值执行比较和交换操作，此函数是并发安全的。
+
+```go
+// addr 表示地址
+// old  表示uint32值，它是旧的，
+// new  表示uint32新值，它将与旧值交换自身。
+// 如果交换完成，则返回true，否则返回false。
+func CompareAndSwapUint32(addr *uint32, old, new uint32) (swapped bool)
+```
+
+`atomic.StoreUint32()` 函数用于将`val`原子存储到`* addr`中，此函数是并发安全的。
+
+```go
+// addr 表示地址
+// val  表示uint32值，它是旧的，
+func StoreUint32(addr *uint32, val uint32)
+```
+
+过载保护核心还使用了滑动窗口，滑动窗口的原理和细节可以看前一篇文章，里面有详细解答。
+
+引用文章：
+
+- [微服务治理之如何优雅应对突发流量洪峰](

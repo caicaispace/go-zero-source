@@ -15,14 +15,12 @@ import (
 	"github.com/zeromicro/go-zero/core/timex"
 )
 
-// https://juejin.cn/post/7033581706342989831
-
 const (
 	defaultBuckets = 50              // 默认 bucket 数量
 	defaultWindow  = time.Second * 5 // 默认窗口大小
 	// using 1000m notation, 900m is like 80%, keep it as var for unit test
-	defaultCpuThreshold = 900 // cpu 过载阀值 （900m 对应 80% 占用率）
-	defaultMinRt        = float64(time.Second / time.Millisecond)
+	defaultCpuThreshold = 900                                     // cpu 过载阀值 （900m 对应 80% 占用率）
+	defaultMinRt        = float64(time.Second / time.Millisecond) // 默认最大的平均响应时间
 	// moving average hyperparameter beta for calculating requests on the fly
 	flyingBeta      = 0.9         // 用于实时计算请求的移动平均超参数β
 	coolOffDuration = time.Second // 冷却时间阀值
