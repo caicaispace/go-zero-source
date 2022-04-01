@@ -8,8 +8,6 @@ import (
 	"gozerosource/code/core/breaker"
 )
 
-// https://juejin.cn/post/6891836358155829262
-
 func Test_Breaker(t *testing.T) {
 	b := breaker.NewBreaker()
 	for i := 0; i < 100; i++ {

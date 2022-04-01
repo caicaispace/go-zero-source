@@ -8,9 +8,6 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/redis"
 )
 
-// https://juejin.cn/post/7051406419823689765
-// https://juejin.cn/post/6895928148521648141
-
 /*
 
 -- KYES[1]:限流器key

@@ -8,8 +8,6 @@ import (
 	"gozerosource/code/core/collection"
 )
 
-// https://juejin.cn/post/6968606293191983111
-
 const (
 	// 250ms for bucket duration
 	windowSec = time.Second // 窗口时间

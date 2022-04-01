@@ -12,9 +12,6 @@ import (
 	xrate "golang.org/x/time/rate"
 )
 
-// https://juejin.cn/post/6898915539851149325
-// https://juejin.cn/post/7028021451366072328
-
 /*
 
 -- 返回是否可以活获得预期的token
