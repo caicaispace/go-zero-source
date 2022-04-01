@@ -1,4 +1,4 @@
-
+[TOC]
 # go-zero 源码阅读
 
 go-zero 作为一个微服务框架，不仅给我们提供了很好的参考，而且核心代码量不多，我们可以在闲暇时间读读他的核心代码，来多多学习充电。
@@ -630,3 +630,241 @@ func StoreUint32(addr *uint32, val uint32)
 引用文章：
 
 - [微服务治理之如何优雅应对突发流量洪峰](https://juejin.cn/post/7033581706342989831)
+
+#### 限流器
+
+go-zero 给我们提供了两种限流器，而且都是基于 redis 实现的可分布式的
+
+限流器核心文件带注释代码如下，大家可以参阅
+
+- 计数器限流器 https://github.com/TTSimple/go-zero-source/blob/master/code/core/limit/periodlimit.go
+- 令牌桶限流器 https://github.com/TTSimple/go-zero-source/blob/master/code/core/limit/tokenlimit.go
+
+我们通过最小化代码来看看限流器的核心思路
+
+##### 简易计数器算法
+
+```go
+// 简易计数器算法
+type Counter struct {
+	rate  int           // 计数周期内最多允许的请求数
+	begin time.Time     // 计数开始时间
+	cycle time.Duration // 计数周期
+	count int           // 计数周期内累计收到的请求数
+	lock  sync.Mutex
+}
+
+func (l *Counter) Allow() bool {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	if l.count == l.rate-1 {
+		now := time.Now()
+		if now.Sub(l.begin) >= l.cycle {
+			// 速度允许范围内， 重置计数器
+			l.Reset(now)
+			return true
+		} else {
+			return false
+		}
+	} else {
+		// 没有达到速率限制，计数加1
+		l.count++
+		return true
+	}
+}
+
+func (l *Counter) Set(r int, cycle time.Duration) {
+	l.rate = r
+	l.begin = time.Now()
+	l.cycle = cycle
+	l.count = 0
+}
+
+func (l *Counter) Reset(t time.Time) {
+	l.begin = t
+	l.count = 0
+}
+
+func Test_Counter(t *testing.T) {
+	c := Counter{}
+	c.Set(20, time.Second)
+	reqTime := 2 * time.Second                     // 总请求时间
+	reqNum := 200                                  // 总请求次数
+	reqInterval := reqTime / time.Duration(reqNum) // 每次请求间隔
+	var trueCount, falseCount int
+	for i := 0; i < reqNum; i++ {
+		go func() {
+			if c.Allow() {
+				trueCount++
+			} else {
+				falseCount++
+			}
+		}()
+		time.Sleep(reqInterval)
+	}
+	fmt.Println("true count: ", trueCount)
+	fmt.Println("false count: ", falseCount)
+}
+```
+
+最终输出
+
+```go
+
+// === RUN   Test_Counter
+// true count:  44
+// false count:  156
+// --- PASS: Test_Counter (2.07s)
+```
+
+##### 简易令牌桶算法
+
+```go
+// 简易令牌桶算法
+type TokenBucket struct {
+	rate         int64 // 固定的token放入速率, r/s
+	capacity     int64 // 桶的容量
+	tokens       int64 // 桶中当前token数量
+	lastTokenSec int64 // 桶上次放token的时间戳 s
+
+	lock sync.Mutex
+}
+
+// 判断是否可通过
+func (l *TokenBucket) Allow() bool {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	now := time.Now().Unix()
+	// 先添加初始令牌
+	l.tokens = l.tokens + (now-l.lastTokenSec)*l.rate
+	if l.tokens > l.capacity {
+		l.tokens = l.capacity
+	}
+	l.lastTokenSec = now
+	if l.tokens > 0 {
+		// 还有令牌，领取令牌
+		l.tokens--
+		return true
+	}
+	// 没有令牌,则拒绝
+	return false
+}
+
+// 动态设置参数
+// r rate
+// c capacity
+func (l *TokenBucket) Set(r, c int64) {
+	l.rate = r
+	l.capacity = c
+	l.tokens = r
+	l.lastTokenSec = time.Now().Unix()
+}
+
+func Test_TokenBucket(t *testing.T) {
+	lb := &TokenBucket{}
+	lb.Set(20, 20)
+	requestTime := 2 * time.Second                             // 总请求时间
+	requestNum := 200                                          // 总请求次数
+	requestInterval := requestTime / time.Duration(requestNum) // 每次请求间隔
+	var trueCount, falseCount int
+	for i := 0; i < requestNum; i++ {
+		go func() {
+			if lb.Allow() {
+				trueCount++
+			} else {
+				falseCount++
+			}
+		}()
+		time.Sleep(requestInterval)
+	}
+	fmt.Println("true count: ", trueCount)
+	fmt.Println("false count: ", falseCount)
+}
+```
+
+最终输出
+
+```go
+=== RUN   Test_TokenBucket
+true count:  60
+false count:  140
+--- PASS: Test_TokenBucket (2.07s)
+```
+
+##### 简易漏桶算法
+
+漏桶算法的分布式版本 go-zero 没有给我们实现，我们看看其核心算法，然后参照核心算法来实现分布式版本，给大家布置个作业 :)
+
+```go
+// 简易漏桶算法
+type LeakyBucket struct {
+	rate       float64 // 固定每秒出水速率
+	capacity   float64 // 桶的容量
+	water      float64 // 桶中当前水量
+	lastLeakMs int64   // 桶上次漏水时间戳 ms
+
+	lock sync.Mutex
+}
+
+// 判断是否可通过
+func (l *LeakyBucket) Allow() bool {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	now := time.Now().UnixNano() / 1e6
+	eclipse := float64((now - l.lastLeakMs)) * l.rate / 1000 // 先执行漏水
+	l.water = l.water - eclipse                              // 计算剩余水量
+	l.water = math.Max(0, l.water)                           // 桶干了
+	l.lastLeakMs = now
+	if (l.water + 1) < l.capacity {
+		// 尝试加水,并且水还未满
+		l.water++
+		return true
+	} else {
+		// 水满，拒绝加水
+		return false
+	}
+}
+
+// 动态设置参数
+// r rate
+// c capacity
+func (l *LeakyBucket) Set(r, c float64) {
+	l.rate = r
+	l.capacity = c
+	l.water = 0
+	l.lastLeakMs = time.Now().UnixNano() / 1e6
+}
+
+func Test_LeakyBucket(t *testing.T) {
+	lb := &LeakyBucket{}
+	lb.Set(20, 20)
+	reqTime := 2 * time.Second                     // 总请求时间
+	reqNum := 200                                  // 总请求次数
+	reqInterval := reqTime / time.Duration(reqNum) // 每次请求间隔
+	var trueCount, falseCount int
+	for i := 0; i < reqNum; i++ {
+		go func() {
+			if lb.Allow() {
+				trueCount++
+			} else {
+				falseCount++
+			}
+		}()
+		time.Sleep(reqInterval)
+	}
+	fmt.Println("true count: ", trueCount)
+	fmt.Println("false count: ", falseCount)
+}
+```
+
+最终输出
+
+```go
+// === RUN   Test_LeakyBucket
+// true count:  60
+// false count:  140
+// --- PASS: Test_LeakyBucket (2.06s)
+```

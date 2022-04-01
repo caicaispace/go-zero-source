@@ -26,7 +26,7 @@ local current = redis.call("INCRBY",KYES[1],1)
 if current == 1 then
   redis.call("expire",KYES[1],window)
   return 1
--- 如果当前请求数量小于limit则返回 成功
+-- 如果当前请求数量<limit则返回 成功
 elseif current < limit then
   return 1
 -- 如果当前请求数量==limit则返回 最后一次请求
