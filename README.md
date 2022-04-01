@@ -868,3 +868,9 @@ func Test_LeakyBucket(t *testing.T) {
 // false count:  140
 // --- PASS: Test_LeakyBucket (2.06s)
 ```
+
+引用文章：
+
+- [go-zero 如何扛住流量冲击（一）](https://juejin.cn/post/6895928148521648141)
+- [go-zero 如何扛住流量冲击（二）](https://juejin.cn/post/6898915539851149325)
+- [Go 中实现用户的每日限额（比如一天只能领三次福利）](https://juejin.cn/post/7051406419823689765)
