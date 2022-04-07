@@ -60,7 +60,7 @@ func Test_Rest(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			body, err := NewRequest(tt.method, tt.uri, tt.body)
+			body, err := httpRequest(tt.method, tt.uri, tt.body)
 			if err != nil {
 				t.Errorf("ReadAll: %v", err)
 			}
@@ -71,7 +71,7 @@ func Test_Rest(t *testing.T) {
 	}
 }
 
-func NewRequest(method, url string, bodyRow io.Reader) ([]byte, error) {
+func httpRequest(method, url string, bodyRow io.Reader) ([]byte, error) {
 	req, err := http.NewRequest(method, url, bodyRow)
 	if err != nil {
 		return nil, err
