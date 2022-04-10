@@ -34,6 +34,7 @@ var (
 )
 
 // PrometheusHandler returns a middleware that reports stats to prometheus.
+// prometheus 上报中间件
 func PrometheusHandler(path string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		if !prometheus.Enabled() {

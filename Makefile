@@ -12,7 +12,7 @@ fmt:
 	@gofumpt -l -w ./code/; true
 
 clean:
-	go clean -i .
+	@go clean -i .
 
 help:
 	@echo "make vet: run specified go vet"

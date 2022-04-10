@@ -20,6 +20,7 @@ var (
 )
 
 // SheddingHandler returns a middleware that does load shedding.
+// 过载保护中间件
 func SheddingHandler(shedder load.Shedder, metrics *stat.Metrics) func(http.Handler) http.Handler {
 	if shedder == nil {
 		return func(next http.Handler) http.Handler {

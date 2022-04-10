@@ -10,6 +10,7 @@ import (
 )
 
 // MaxConns returns a middleware that limit the concurrent connections.
+// 最大请求连接数限制中间件
 func MaxConns(n int) func(http.Handler) http.Handler {
 	if n <= 0 {
 		return func(next http.Handler) http.Handler {

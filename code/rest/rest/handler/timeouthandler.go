@@ -25,6 +25,7 @@ const (
 // TimeoutHandler returns the handler with given timeout.
 // If client closed request, code 499 will be logged.
 // Notice: even if canceled in server side, 499 will be logged as well.
+// 超时控制中间件
 func TimeoutHandler(duration time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		if duration > 0 {

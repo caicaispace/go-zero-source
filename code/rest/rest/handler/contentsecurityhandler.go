@@ -17,6 +17,7 @@ const contentSecurity = "X-Content-Security"
 type UnsignedCallback func(w http.ResponseWriter, r *http.Request, next http.Handler, strict bool, code int)
 
 // ContentSecurityHandler returns a middleware to verify content security.
+// 安全验证中间件
 func ContentSecurityHandler(decrypters map[string]codec.RsaDecrypter, tolerance time.Duration,
 	strict bool, callbacks ...UnsignedCallback,
 ) func(http.Handler) http.Handler {

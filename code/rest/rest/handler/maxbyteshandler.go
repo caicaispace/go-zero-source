@@ -7,6 +7,7 @@ import (
 )
 
 // MaxBytesHandler returns a middleware that limit reading of http request body.
+// 最大请求数据限制中间件
 func MaxBytesHandler(n int64) func(http.Handler) http.Handler {
 	if n <= 0 {
 		return func(next http.Handler) http.Handler {
