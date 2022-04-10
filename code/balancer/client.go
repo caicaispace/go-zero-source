@@ -28,24 +28,22 @@ func NewClient() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	for {
-		select {
-		case <-ticker.C:
+		<-ticker.C
+		fmt.Println("")
+		fmt.Println("---------------------------------------------")
+		fmt.Println("")
+		conn := client.Conn()
+		balancer := proto.NewBalancerClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		resp, err := balancer.Hello(ctx, &proto.Request{
+			Msg: "I'm balancer client",
+		})
+		if err != nil {
+			fmt.Printf("warning ⛔ %s X %s\n", time.Now().Format(timeFormat), err.Error())
+		} else {
 			fmt.Println("")
-			fmt.Println("---------------------------------------------")
-			fmt.Println("")
-			conn := client.Conn()
-			balancer := proto.NewBalancerClient(conn)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			resp, err := balancer.Hello(ctx, &proto.Request{
-				Msg: "im balancer test",
-			})
-			if err != nil {
-				fmt.Printf("warning ⛔ %s X %s\n", time.Now().Format(timeFormat), err.Error())
-			} else {
-				fmt.Println("")
-				fmt.Printf("im client 👉 %s => %s\n\n", time.Now().Format(timeFormat), resp.Data)
-			}
-			cancel()
+			fmt.Printf("I'm client 👉 %s => %s\n\n", time.Now().Format(timeFormat), resp.Data)
 		}
+		cancel()
 	}
 }

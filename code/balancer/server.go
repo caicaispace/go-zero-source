@@ -30,7 +30,7 @@ func NewBalancerServer() *BalancerServer {
 }
 
 func (gs *BalancerServer) Hello(ctx context.Context, req *proto.Request) (*proto.Response, error) {
-	fmt.Printf("im server 👉 %s => %s\n\n", time.Now().Format(timeFormat), req)
+	fmt.Printf("I'm blancer server 👉 %s => %s\n\n", time.Now().Format(timeFormat), req)
 
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -72,7 +72,3 @@ func NewServer() {
 	server.AddUnaryInterceptors(interceptor)
 	server.Start()
 }
-
-// func main() {
-// 	NewServer()
-// }
