@@ -2007,3 +2007,328 @@ func TestSimpleEWMA(t *testing.T) {
 - [Kratos 源码分析：Warden 负载均衡算法之 P2C](https://pandaychen.github.io/2020/07/25/KRATOS-WARDEN-BALANCER-P2C-ANALYSIS/)
 - [Golang 实现加权轮询负载均衡](https://juejin.cn/post/6974775746807988232)
 - [指数加权移动平均(Exponential Weighted Moving Average)](https://blog.csdn.net/mzpmzk/article/details/80085929)
+
+## 服务部署
+
+### 生产环境搭建
+
+#### docker & k8s搭建
+
+详细请看我的下一篇文章
+
+### git私有仓库 &  容器私有仓库 & CI、DI
+
+详细请看我的下一篇文章
+
+### 配置文件编写 & 生成
+
+#### dockerfile
+
+我们先用网关部分代码来演示
+
+- 执行代码
+
+```shell
+./cmd.sh gen dockerfile gateway
+```
+
+- 生成文件 `code/service/gateway/api/Dockerfile`
+
+```shell
+### 加载基础镜像
+FROM golang:alpine AS builder
+
+LABEL stage=gobuilder
+
+ENV CGO_ENABLED 0
+ENV GOOS linux
+### 设置 go module 代理
+ENV GOPROXY https://goproxy.cn,direct
+
+WORKDIR /build/zero
+
+### 下载依赖文件
+ADD go.mod .
+ADD go.sum .
+RUN go mod download
+COPY . .
+COPY service/gateway/api/etc /app/etc
+### 编译源代码
+RUN go build -ldflags="-s -w" -o /app/gateway service/gateway/api/gateway.go
+
+### 生成docker镜像
+FROM alpine
+
+RUN apk update --no-cache && apk add --no-cache ca-certificates tzdata
+ENV TZ Asia/Shanghai
+
+WORKDIR /app
+COPY --from=builder /app/gateway /app/gateway
+COPY --from=builder /app/etc /app/etc
+
+CMD ["./gateway", "-f", "etc/gateway.prod.yaml"]
+
+```
+
+从生成的Dockerfile可以看到主要有两个部分
+
+1. 加载golang基础镜像，将代码编译为二进制文件
+2. 加载运行环境基础镜像并生成gateway运行环境的docker镜像
+
+为啥分为两个部分呢，我们不能直接把编译代码和打包镜像放一起吗，这当然是可以的，但是这样会导致docker镜像包会很大，而把编译和打包分开后可以大大减少docker镜像包的大小，方便我们快速分发和部署。
+
+#### 编译代码&镜像打包
+
+```
+➜  go-zero-mall git:(master) ✗ ./cmd.sh docker build gateway
+-------- docker build gateway  --------
+time: 2022-05-02 00:19:58 msg: ------------ docker build gateway ------------
+Untagged: gateway:latest
+Deleted: sha256:0eedc326b97f06a3c5d19665309369c4c163e430b6c3d17de8ba9a1ebaf37ca8
+[+] Building 31.9s (19/19) FINISHED                                                  
+ => [internal] load build definition from Dockerfile                            0.0s
+ => => transferring dockerfile: 733B                                            0.0s
+ => [internal] load .dockerignore                                               0.0s
+ => => transferring context: 2B                                                 0.0s
+ => [internal] load metadata for docker.io/library/alpine:latest                3.7s
+ => [internal] load metadata for docker.io/library/golang:alpine                3.4s
+ => [builder 1/8] FROM docker.io/library/golang:alpine@sha256:42d35674864fbb57  0.0s
+ => [internal] load build context                                               1.2s
+ => => transferring context: 35.78MB                                            1.1s
+ => [stage-1 1/5] FROM docker.io/library/alpine@sha256:4edbd2beb5f78b1014028f4  0.0s
+ => CACHED [builder 2/8] WORKDIR /build/zero                                    0.0s
+ => CACHED [builder 3/8] ADD go.mod .                                           0.0s
+ => CACHED [builder 4/8] ADD go.sum .                                           0.0s
+ => CACHED [builder 5/8] RUN go mod download                                    0.0s
+ => [builder 6/8] COPY . .                                                      0.6s
+ => [builder 7/8] COPY service/gateway/api/etc /app/etc                         0.0s
+ => [builder 8/8] RUN go build -ldflags="-s -w" -o /app/gateway service/gatew  26.1s
+ => CACHED [stage-1 2/5] RUN apk update --no-cache && apk add --no-cache ca-ce  0.0s
+ => CACHED [stage-1 3/5] WORKDIR /app                                           0.0s
+ => CACHED [stage-1 4/5] COPY --from=builder /app/gateway /app/gateway          0.0s
+ => CACHED [stage-1 5/5] COPY --from=builder /app/etc /app/etc                  0.0s
+ => exporting to image                                                          0.0s
+ => => exporting layers                                                         0.0s
+ => => writing image sha256:0eedc326b97f06a3c5d19665309369c4c163e430b6c3d17de8  0.0s
+ => => naming to docker.io/library/gateway:latest                               0.0s
+
+Use 'docker scan' to run Snyk tests against images to find vulnerabilities and learn how to fix them
+```
+
+`docker images`查看docker镜像信息
+
+```
+➜  go-zero-mall git:(master) ✗ docker images
+REPOSITORY                  TAG       IMAGE ID       CREATED         SIZE
+gateway                     latest    0eedc326b97f   7 days ago      41.6MB
+```
+
+#### 自动部署文件编写`deploy.yaml`
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: go-zero-mall-gateway
+  name: go-zero-mall-gateway
+  namespace: zero   #一定要写名称空间
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 3
+  selector:
+    matchLabels:
+      app: go-zero-mall-gateway
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 50%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: go-zero-mall-gateway
+    spec:
+      imagePullSecrets:
+        - name: aliyun-docker-hub  #提前在项目下配置访问阿里云的账号密码
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: go-zero-mall-gateway
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - image: $REGISTRY/$ALIYUNHUB_NAMESPACE/gateway:latest
+          imagePullPolicy: Always
+          name: app
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 60Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: go-zero-mall-gateway
+  name: go-zero-mall-gateway
+  namespace: zero
+spec:
+  ports:
+    - name: http
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+  selector:
+    app: go-zero-mall-gateway
+  sessionAffinity: None
+  type: ClusterIP
+```
+
+通过自动部署文件我们可以指定一些关键指标
+
+- 服务名称
+- pod数量
+- 自动扩容阀值
+- 服务权重
+- 容器端口
+- cpu&memory最大使用量
+
+通过这些指标我们的服务基本可以稳定运行啦
+
+#### Jenkins文件编写`Jenkinsfile`
+
+```
+pipeline {
+  agent {
+    node {
+      label 'go'
+    }
+
+  }
+  stages {
+    stage('clone code') {
+      agent none
+      steps {
+        git(url: 'https://gitee.com/go-open-project/go-zero-mall.git', changelog: true, poll: false)
+        sh 'ls -al'
+      }
+    }
+
+    stage('deploy user') {
+      // agent none
+      steps {
+        container ('go') {
+          withCredentials([
+            kubeconfigFile(
+              credentialsId: env.KUBECONFIG_CREDENTIAL_ID,
+              variable: 'KUBECONFIG'
+            )]) 
+            {
+              sh 'envsubst < code/service/user/rpc/deploy.yaml | kubectl apply -f -'
+            }
+        }
+      }
+    }
+
+    stage('deploy product') {
+      // agent none
+      steps {
+        container ('go') {
+          withCredentials([
+            kubeconfigFile(
+              credentialsId: env.KUBECONFIG_CREDENTIAL_ID,
+              variable: 'KUBECONFIG'
+            )]) 
+            {
+              sh 'envsubst < code/service/product/rpc/deploy.yaml | kubectl apply -f -'
+            }
+        }
+      }
+    }
+
+    stage('deploy order') {
+      // agent none
+      steps {
+        container ('go') {
+          withCredentials([
+            kubeconfigFile(
+              credentialsId: env.KUBECONFIG_CREDENTIAL_ID,
+              variable: 'KUBECONFIG'
+            )]) 
+            {
+              sh 'envsubst < code/service/order/rpc/deploy.yaml | kubectl apply -f -'
+            }
+        }
+      }
+    }
+
+    stage('deploy gateway') {
+      // agent none
+      steps {
+        container ('go') {
+          withCredentials([
+            kubeconfigFile(
+              credentialsId: env.KUBECONFIG_CREDENTIAL_ID,
+              variable: 'KUBECONFIG'
+            )]) 
+            {
+              sh 'envsubst < code/service/gateway/api/deploy.yaml | kubectl apply -f -'
+            }
+        }
+      }
+    }
+
+  }
+  environment {
+    DOCKER_CREDENTIAL_ID = 'dockerhub-id'
+    GITHUB_CREDENTIAL_ID = 'github-id'
+    KUBECONFIG_CREDENTIAL_ID = 'demo-kubeconfig'
+    REGISTRY = 'registry.cn-shanghai.aliyuncs.com'
+    DOCKERHUB_NAMESPACE = 'ttsimple'
+    ALIYUNHUB_NAMESPACE = 'ttsimple'
+    GITHUB_ACCOUNT = 'kubesphere'
+    APP_NAME = 'go-zero-mall-gateway'
+  }
+  parameters {
+    string(name: 'TAG_NAME', defaultValue: '', description: '')
+  }
+}
+```
+
+我们在 DevOps 中设置好环境变量、仓库地址、webhook 后便可在我们推送代码后自动部署我们的项目
+
+说明：我们的容器是在开发环境打包的，我们当然也可以通过 Jenkins 来自动打包镜像
+
+- 自动部署状态
+
+![image](https://note.youdao.com/yws/public/resource/c4ee4ea1ae4f7e92abf08df8cfd18a72/2B46D355BAE142F8B75A414040E14A04?ynotemdtimestamp=1651510880019)
+
+- 服务运行状态
+
+![image](https://note.youdao.com/yws/public/resource/c4ee4ea1ae4f7e92abf08df8cfd18a72/1DF3F7EBDB354ADBAC82E4FEBA44EBA4?ynotemdtimestamp=1651510880019)
+
+- 调用线上用户登录接口
+
+![image](https://note.youdao.com/yws/public/resource/c4ee4ea1ae4f7e92abf08df8cfd18a72/B1C0868DAC5A42F0AA36B29DA173656B?ynotemdtimestamp=1651510880019)
+
+### 总结
+
+- 通过 go-zero 可以方便生成dockerfile
+- 在 `deploy.yaml` 中指定服务部署指标
+- 在 `Jenkinsfile` 中指定服务从哪里来，分别需要部署哪些服务，等等。
+- 私有部署
+    - 镜像服务可以使用`Harbor`搭建，
+    - 镜像制品可以使用云服务或`Jenkins`来打包生成，
+    - 私有仓库可以使用云服务，gitee，开源仓库服务来搭建
