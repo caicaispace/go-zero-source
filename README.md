@@ -247,8 +247,8 @@ func WithJwtTransition(secret, prevSecret string) RouteOption {
 
 权限控制核心文件带注释代码如下，大家可以参阅
 
-- https://github.com/TTSimple/go-zero-source/tree/master/code/rest/rest/handler/authhandler.go
-- https://github.com/TTSimple/go-zero-source/tree/master/code/rest/rest/token/tokenparser.go
+- https://github.com/caicaispace/go-zero-source/tree/master/code/rest/rest/handler/authhandler.go
+- https://github.com/caicaispace/go-zero-source/tree/master/code/rest/rest/token/tokenparser.go
 
 go-zero 提供 jwt 权限控制，jwt 只做登录与未登录验证，细粒度的权限验证我们可以使用其他成熟方案
 
@@ -291,7 +291,7 @@ movingAverage.next(5); // 返回 6.0 = (10 + 3 + 5) / 3
 
 - 窗口大小是固定的
 - 窗口每次都会滑动
-- 窗口滑动是替换就数据
+- 窗口滑动就是替换旧数据
 
 我们来解一解题：
 
@@ -404,7 +404,7 @@ func (b *googleBreaker) accept() error {
 }
 ```
 
-go-zero 熔断器给我们提供如下方法，更我们使用：
+go-zero 熔断器给我们提供如下方法，供我们使用：
 
 ```go
 type (
@@ -450,7 +450,7 @@ type (
 
 关于 go-zero 熔断器的文章就到这里啦，看完之后是不是觉得很简单，觉得不简单可以多读几遍，感谢大家的阅读。
 
-[熔断器保姆级带注释源码，点击可得](https://github.com/TTSimple/go-zero-source/tree/master/code/breaker)
+[熔断器保姆级带注释源码，点击可得](https://github.com/caicaispace/go-zero-source/tree/master/code/breaker)
 
 引用文章：
 
@@ -637,8 +637,8 @@ go-zero 给我们提供了两种限流器，而且都是基于 redis 实现的�
 
 限流器核心文件带注释代码如下，大家可以参阅
 
-- 计数器限流器 https://github.com/TTSimple/go-zero-source/blob/master/code/core/limit/periodlimit.go
-- 令牌桶限流器 https://github.com/TTSimple/go-zero-source/blob/master/code/core/limit/tokenlimit.go
+- 计数器限流器 https://github.com/caicaispace/go-zero-source/blob/master/code/core/limit/periodlimit.go
+- 令牌桶限流器 https://github.com/caicaispace/go-zero-source/blob/master/code/core/limit/tokenlimit.go
 
 我们通过最小化代码来看看限流器的核心思路
 
@@ -1847,7 +1847,7 @@ func Test_HashConsistencyWithServer(t *testing.T) {
 
 go-zero 的负载均衡算法通过替换 grpc 默认负载均衡算法来实现负载均衡
 
-详细注释代码请参阅 https://github.com/TTSimple/go-zero-source/blob/master/code/balancer/zrpc/p2c/p2c.go
+详细注释代码请参阅 https://github.com/caicaispace/go-zero-source/blob/master/code/balancer/zrpc/p2c/p2c.go
 
 我们看看其中核心的两个算法
 
@@ -2296,8 +2296,8 @@ pipeline {
     GITHUB_CREDENTIAL_ID = 'github-id'
     KUBECONFIG_CREDENTIAL_ID = 'demo-kubeconfig'
     REGISTRY = 'registry.cn-shanghai.aliyuncs.com'
-    DOCKERHUB_NAMESPACE = 'ttsimple'
-    ALIYUNHUB_NAMESPACE = 'ttsimple'
+    DOCKERHUB_NAMESPACE = 'caicaispace'
+    ALIYUNHUB_NAMESPACE = 'caicaispace'
     GITHUB_ACCOUNT = 'kubesphere'
     APP_NAME = 'go-zero-mall-gateway'
   }
